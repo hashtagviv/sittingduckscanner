@@ -13,27 +13,30 @@ def get_ns_records(domain):
     """
     Retrieves the NS records for the given domain.
     """
+    # print('Getting NS Records lame delegation check...')
     try:
         time.sleep(2)
         answers = dns.resolver.resolve(domain, 'NS')
         ns_records = [str(rdata.target).rstrip('.') for rdata in answers]
-        print(f"Nameservers for {domain}: {', '.join(ns_records)}")
+        # print(f"Nameservers for {domain}: {', '.join(ns_records)}")
         if not ns_records:
             parent_domain = domain[domain.find('.') + 1:]
-            print(f"Attempting to get parent level NS {parent_domain}")
+            # print(f"Attempting to get parent level NS {parent_domain}")
             return get_ns_records(parent_domain)
-        return ns_records
+        return ns_records,domain
     except dns.resolver.NoAnswer:
-        print(f"No NS records found for domain: {domain}")
-        return []
+        print(f"No answer received from NS query {domain}")
+        parent_domain = domain[domain.find('.') + 1:]
+        # print(f"Attempting to get parent level NS {parent_domain}")
+        return get_ns_records(parent_domain)
     except dns.resolver.NXDOMAIN:
         print(f"Domain does not exist: {domain}")
         parent_domain = domain[domain.find('.') + 1:]
-        print(f"Attempting to get parent level NS {parent_domain}")
+        # print(f"Attempting to get parent level NS {parent_domain}")
         return get_ns_records(parent_domain)
     except Exception as e:
         print(f"Error retrieving NS records for {domain}: {e}")
-        return []
+        return [], ""
 
     return []
 
@@ -42,11 +45,12 @@ def resolve_ns_ips(ns_name):
     """
     Resolves the A records (IPv4 addresses) for a given nameserver.
     """
+    # print(f"resolving NS {ns_name} IPs lame delegation check")
     try:
         time.sleep(1)
         answers = dns.resolver.resolve(ns_name, 'A')
         ips = [str(rdata) for rdata in answers]
-        print(f"Resolved IPs for {ns_name}: {', '.join(ips)}")
+        # print(f"Resolved IPs for {ns_name}: {', '.join(ips)}")
         return ips
     except dns.resolver.NoAnswer:
         print(f"No A records found for nameserver: {ns_name}")
@@ -62,8 +66,9 @@ def query_soa(ns_ip, domain):
     Sends a SOA query to the specified nameserver IP for the given domain.
     Returns the DNS response message or None if an error occurs.
     """
+    # print(f'querying SOA for {ns_ip, domain}')
     try:
-        time.sleep(1)
+        time.sleep(2)
         query = dns.message.make_query(domain, dns.rdatatype.SOA)
         response = dns.query.udp(query, ns_ip, timeout=5)
         return response
@@ -80,7 +85,7 @@ def evaluate_response(response):
     Returns a list of issues found.
     """
     issues = []
-    print(f'evaluating response ....\n \n')
+    # print(f'evaluating response ....\n \n')
 
     if response is None:
         issues.append("No response received.")
@@ -106,7 +111,6 @@ def evaluate_response(response):
             break
     if aa_bit_set and not has_soa:
         issues.append("AA bit set but answer does not contain an SOA record.")
-
     return issues
 
 
@@ -116,15 +120,15 @@ def main(domain):
     """
 
     # Step 1: Retrieve NS records
-    ns_records = get_ns_records(domain)
+    ns_records,domain = get_ns_records(domain)
     if not ns_records:
-        print(f'NS RECORDS FOUND FOR LAME DELEGATION CHECK{ns_records}')
         return
 
     # Step 2: For each NS, resolve its IPs
     ns_lame = {}
     for ns in ns_records:
         ns_ips = resolve_ns_ips(ns)
+        
         if not ns_ips:
             print(f"Flagging nameserver as lame due to unresolved IPs: {ns}")
             ns_lame[ns] = True
@@ -133,41 +137,38 @@ def main(domain):
         # Step 3: Query SOA record on each IP
         is_lame = False
         for ip in ns_ips:
-            print(
-                f"\nQuerying SOA record for {domain} on nameserver {ns} ({ip})...")
+            # print(
+                # f"\nQuerying SOA record for {domain} on nameserver {ns} ({ip})...")
             response = query_soa(ip, domain)
             issues = evaluate_response(response)
-
             if issues:
-                print(f"Issues found with nameserver {ns} ({ip}):")
-                for issue in issues:
-                    print(f" - {issue}")
                 is_lame = True
-                break
-            else:
-                print(f"Nameserver {ns} ({ip}) responded correctly.")
+            # print(f'{ns}, {issues}')
 
         if is_lame:
             ns_lame[ns] = True
         else:
             ns_lame[ns] = False
-    print('Evaluated all Nameservers')
+    # print(f'Evaluated all Nameservers for {domain}')
     return ns_lame
 
 
-def process_data(subdomain):
+def process_data(subdomain, aggregated_data):
     lame_servers = main(subdomain)
     if not lame_servers:
         return None
-    result = False
+    final_result = False
+    nameservers_flagged = []
     for ns, result in lame_servers.items():
-        print(f'{ns}, {result}')
         if result == True:
-            return True
-    return False
+            nameservers_flagged.append(ns)
+            final_result = True
+    return final_result, nameservers_flagged
 
 
 if __name__ == "__main__":
-    zone = "aws.com"
+    zone = "verator.aws.com"
     lame_servers = main(zone)
-    print(lame_servers)
+    result, flagged = process_data(zone, [])
+    print(result, flagged)
+    # print(lame_servers)

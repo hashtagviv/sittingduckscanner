@@ -15,4 +15,4 @@ async def subdomain_enumeration(domain):
         if subFound and inScopeFound:
             print(
                 f'found subdomain {event.data}, distance of {event.scope_distance}')
-            yield event.data, event.scope_distance
+            yield event.data

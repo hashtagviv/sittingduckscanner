@@ -12,7 +12,7 @@ def whois_query(domain):
 
 
 def get_registrar(domain):
-    print('fetching registrar for {}'.format(domain))
+    # print('fetching registrar for {}'.format(domain))
     w = whois_query(domain)
     registrar_pattern = re.compile(
         r'(?i)(registrar):\s*(.*)')
@@ -29,7 +29,7 @@ def get_authoritative_nameservers(domain):
         nameservers = [str(rr.target).strip('.') for rr in answer]
         nameserver_orgs = {}
         for nameserver in nameservers:
-            print('Checking nameserver {}'.format(nameserver))
+            # print('Checking nameserver {}'.format(nameserver))
             whois_output = whois_query(nameserver)
             org_pattern = re.compile(
                 r'(?i)(organisation):\s*(.*)')
@@ -39,7 +39,7 @@ def get_authoritative_nameservers(domain):
                 # Extract and clean the organization name
                 nameserver_orgs[nameserver] = match.group(2).strip()
             else:
-                print("Organization not found")
+                # print("Organization not found")
                 nameserver_orgs[nameserver] = "Unknown"
         return nameserver_orgs
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
@@ -54,31 +54,32 @@ def check_if_different(domain, parent_response):
     registrar = get_registrar(domain)
     nameservers_orgs = get_authoritative_nameservers(domain)
     if not nameservers_orgs:
-        print(
-            f'No nameservers found for {domain}, returning None for registrar Check')
+        # print(
+        #     f'No nameservers found for {domain}, returning None for registrar Check')
         return parent_response
     for nameserver in nameservers_orgs:
         if nameservers_orgs[nameserver] == 'Unknown':
-            print('Nameserver {}, org is not known')
+            # print('Nameserver {}, org is not known')
+            return False
         else:
 
             registrar_words = registrar.split(' ')
             words_in_ns_org = nameservers_orgs[nameserver].split(' ')
             if registrar_words[0] in words_in_ns_org and words_in_ns_org[0] in registrar_words:
-                print('Nameserver {} matches. Registrar = {} and NS ORG = {}'.format(
-                    nameserver, registrar, nameservers_orgs[nameserver]))
+                # print('Nameserver {} matches. Registrar = {} and NS ORG = {}'.format(
+                #     nameserver, registrar, nameservers_orgs[nameserver]))
                 return False
             else:
-                print('Nameserver {} does not match. Registrar = {} and NS ORG = {}'.format(
-                    nameserver, registrar, nameservers_orgs[nameserver]))
+                # print('Nameserver {} does not match. Registrar = {} and NS ORG = {}'.format(
+                # nameserver, registrar, nameservers_orgs[nameserver]))
                 return True
 
 
-def process_data(subdomain, parent_response):
-    while True:
-        print(f"Received new domain: {subdomain}")
-        final_result = check_if_different(subdomain, parent_response)
-        return final_result
+def process_data(subdomain, parent_response, aggregated_data):
+    print(f"Received new domain for registrar check: {subdomain}")
+    final_result = check_if_different(subdomain, parent_response)
+    print(f'processed domain {subdomain}')
+    return final_result
 
 
 # if __name__ == "__main__":
