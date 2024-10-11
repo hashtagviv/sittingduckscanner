@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Subdomain Enumeration</title>
+</head>
+<body>
+    <h1>DNS Subdomain Enumeration Tool</h1>
+
+    <!-- 这个表单将与app.js交互 -->
+    <form id="domain-form">
+        <label for="domain">Enter a domain:</label>
+        <input type="text" id="domain" name="domain" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <!-- 结果展示区域 -->
+    <div id="results"></div>
+
+    <!-- 引入 app.js -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
