@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routes.subdomain_router import router as subdomain_router
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -8,6 +9,15 @@ origins = [
     "http://localhost",
     "http://localhost:8000",
 ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Include the subdomain processing routes
 app.include_router(subdomain_router)
