@@ -4,6 +4,11 @@ import uvicorn
 
 app = FastAPI()
 
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+]
+
 # Include the subdomain processing routes
 app.include_router(subdomain_router)
 
