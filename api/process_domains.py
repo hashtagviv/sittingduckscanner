@@ -19,10 +19,8 @@ VULNERABLE_NS_TITLE = 'Vulnerable Nameservers'
 
 
 domains_processed_lock = threading.Lock()
-domains_processed = set({})
-aggregated_data = {}
+domains_processed = set()
 file_lock = threading.Lock()
-aggregated_data_lock = threading.Lock()
 ns_cache = NSCache()
 aggregate_cache = AggregateDataCache()
 data_event = asyncio.Event()
@@ -47,7 +45,7 @@ def write_to_file(filename, data):
 
 
 async def main(domain: str):
-    global processing
+    global processing,domains_processed, ns_cache,aggregate_cache
     processing = 1
     filename = initialize_file(generate_filename(domain))
     executor = ThreadPoolExecutor(max_workers=10)
@@ -68,6 +66,10 @@ async def main(domain: str):
     processing = 0
     processing_task.completed_execution()
     data_event.set()
+    #clear cache
+    domains_processed = set()
+    ns_cache = NSCache()
+    aggregate_cache = AggregateDataCache()
 
 
 def process_subdomain(subdomain: str, parent_response, filename):
