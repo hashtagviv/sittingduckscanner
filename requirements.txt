@@ -5,6 +5,7 @@ ansible-runner==2.4.0
 antlr4-python3-runtime==4.9.3
 anyio==4.6.2.post1
 bbot==2.1.0
+whois
 beautifulsoup4==4.12.3
 cachetools==5.5.0
 certifi==2024.8.30
