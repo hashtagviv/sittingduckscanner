@@ -1,97 +1,266 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
 .App {
   text-align: center;
-  font-family: Arial, sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
-h1 {
-  font-size: 4rem;
-  margin-top: 20px;
-  margin-bottom: 10px;
+body,
+html {
+  font-family: 'Montserrat', sans-serif;
+  background:linear-gradient(90deg, #7bbaf0, #42a5f5);
 }
 
-h2 {
-  font-size: 2.5rem;
-  margin-bottom: 30px;
-}
-
-p {
-  font-size: 1.5rem;
-}
-
-.info-panel {
-  width: 350px;
-  font-size: 1.2rem;
-  color: #333;
-  text-align: left;
-  padding-right: 20px;
-}
-
-.tree-chart {
-  width: 900px;
-  height: 700px;
-  display: inline-block;
-}
-
-input[type="text"] {
-  width: 350px;
-  height: 40px;
-  font-size: 2.5rem;
-  padding: 5px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-button {
-  font-size: 2.5rem;
+/* Header Styles */
+.title-container {
+  width: 100%;
+  background: linear-gradient(90deg, #7bbaf0, #42a5f5);
+  color: #fff;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   padding: 10px 20px;
-  margin-left: 10px;
-  cursor: pointer;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 8px;
 }
 
-button:hover {
-  background-color: #45a049;
+.title-container .logo {
+  width: 160px;
+  height: auto;
+  margin-right: 20px;
+
 }
+
+.title-container h1 {
+  margin: 0;
+  font-size: 70px;
+  color:  #000000aa;
+
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+}
+
 
 .search-bar {
+  width: 90%;
+  margin: 20px auto;
   display: flex;
   justify-content: center;
-  margin-top: 30px;
-  margin-bottom: 60px;
 }
 
-.title-container {
-  display: flex;
-  justify-content: center;
+.search-bar input {
+  width: 60%;
+  padding: 10px;
+  border: 1px solid rgb(0, 0, 0);
+  border-radius: 4px 0 0 4px;
+  font-size: 16px;
+}
+
+.search-bar button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #1f639a;
+  /* Match header color */
+  color: #fff;
+  /* White text */
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 0 4px 4px 0;
+}
+
+.search-bar button:hover {
+  background-color: #1669aa;
+  /* Slightly darker blue on hover */
+}
+
+.loading-bar-container {
+  width: 80%;
+  margin: 20px auto;
+  background-color: #f3f3f3;
+  border-radius: 5px;
+}
+
+.loading-bar {
+  width: 100%;
+  height: 15px;
+  background-color: #ddd;
+  overflow: hidden;
+  position: relative;
+  border-radius: 5px;
+}
+
+.loading-progress {
+  width: 0%;
+  height: 100%;
+  background-color: #4caf50;
+  animation: loading 5s infinite;
+  /* Changed from 2s to 5s */
+}
+
+@keyframes loading {
+  0% {
+    width: 0%;
+  }
+
+  50% {
+    width: 80%;
+  }
+
+  100% {
+    width: 0%;
+  }
+}
+
+/* Styles for the scanning text */
+.scanning-text {
+  font-size: 18px;
+  color: #333;
   margin-top: 20px;
 }
 
-.tooltip {
-  position: absolute;
-  text-align: center;
-  width: 150px;
+/* Status bar styles */
+.status-bar {
+  width: 80%;
+  margin: 20px auto;
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  color: #333;
   padding: 10px;
-  background: lightgray;
-  border: 1px solid black;
-  pointer-events: none;
-  font-size: 1rem;
-  color: black;
-  display: none;
+  background-color: #f9f9f9;
+  border-radius: 5px;
 }
 
+/* Styles for the completed scanning box */
+.completed-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 30px 40px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  text-align: center;
+}
+
+.completed-box h2 {
+  margin-bottom: 20px;
+}
+
+.completed-box p {
+  margin: 10px 0;
+}
+
+.completed-box button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #42a5f5;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.completed-box button:hover {
+  background-color: #42a5f5;
+}
+
+/* Overlay background when the box is displayed */
+.completed-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Content Container for Two-Column Layout */
 .content-container {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 50px;
-  gap: 50px; 
+  width: 90%;
+  margin: 0 auto;
+  margin-top: 20px;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #f4f4f4; 
+/* App.css */
+
+/* ... existing styles ... */
+
+/* Left Pane Styles */
+.left-pane {
+  width: 35%;
+  margin-right: 20px;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.left-pane h2 {
+  margin-top: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Customize scrollbar for left pane */
+.left-pane::-webkit-scrollbar {
+  width: 8px;
+}
+
+.left-pane::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.left-pane::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 4px;
+}
+
+.left-pane::-webkit-scrollbar-thumb:hover {
+  background-color: #a8a8a8;
+}
+
+/* Right Pane Styles */
+.right-pane {
+  width: 65%;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+/* Adjust status bar width */
+.status-bar {
+  width: 90%;
+}
+
+/* Adjust scanning text position */
+.scanning-text {
+  width: 90%;
+  margin: 20px auto;
+  text-align: left;
+}
+
+
+
+
+/* Alternatively, to match the header color */
+.header-separator {
+  width: 90%;
+  margin: 10px auto 0 auto;
+  border-bottom: 2px solid #fff;
+  /* White line to match header text color */
+  opacity: 0.5;
+  /* Slightly transparent for subtlety */
 }
