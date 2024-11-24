@@ -8,6 +8,7 @@ from asyncio import Queue
 from utils.iterate_subdomains import subdomain_enumeration
 import utils.lame_delegation_check as lame_delegation_check
 import utils.compare_registrar_provider as registrar_check
+from utils.compare_registrar_provider import get_registrant
 from classes.nameserver_cache import DomainNSCache, NSCache, RegistrantCache
 from classes.aggregate_data_cache import AggregateDataCache
 from classes.processors import ProcessorsAvailable
@@ -52,11 +53,15 @@ def format_providers(nameservers, ns_cache):
     # Given a list of nameservers and ns_cache, return all the providers, or empty if not found
     orgs = []
     for nameserver in nameservers:
-        org = ns_cache.get_ns_record(nameserver, "dns_org")
+        org = ns_cache.get_ns_record(nameserver, option="dns_org")
         if org:
             orgs.append(org)
         else:
-            orgs.append("")
+            ns_domain = '.'.join(nameserver.split('.')[-2:])
+            dns_provider = get_registrant(ns_domain)
+            ns_cache.set_ns_record(
+                nameserver, {"dns_org": dns_provider})
+            orgs.append(dns_provider)
     return orgs
 
 
@@ -65,9 +70,9 @@ async def main(domain: str):
     processing = 1
     filename = initialize_file(generate_filename(domain))
     executor = ThreadPoolExecutor(max_workers=10)
-    parent_domain_dns_registrar_diff, registrar = registrar_check.check_if_different(
+    parent_domain_dns_registrar_diff, registrar, connectivity = registrar_check.check_if_different(
         domain, None, domain_ns_cache, ns_cache, registrant_cache)
-    lame_delegation_answer, flagged_nameservers, all_nameservers = lame_delegation_check.process_data(
+    lame_delegation_answer, flagged_nameservers, all_nameservers, issues, responses = lame_delegation_check.process_data(
         domain, domain_ns_cache, aggregate_cache)
     all_orgs = format_providers(all_nameservers, ns_cache)
     aggregate_cache.set(domain, {
@@ -77,7 +82,9 @@ async def main(domain: str):
         'flagged_name_servers': flagged_nameservers,
         'all_nameservers': all_nameservers,
         'registrar': registrar,
-        'all_orgs': all_orgs
+        'all_orgs': all_orgs,
+        'connectivity': connectivity,
+        'issues': issues
     })
     write_to_file(filename, {'subdomain': domain,
                   **aggregate_cache.get(domain)})
@@ -111,11 +118,11 @@ def process_subdomain(subdomain: str, parent_response, filename):
             domains_processed.add(subdomain)
     except:
         return
-    registrar_dns_diff, registrar = registrar_check.process_data(
+    registrar_dns_diff, registrar, connectivity = registrar_check.process_data(
         subdomain, parent_response, domain_ns_cache, ns_cache, registrant_cache)
 
     # print(f'START LAME DELEGATION CHECK {subdomain}')
-    lame_delegation, nameservers, all_nameservers = lame_delegation_check.process_data(
+    lame_delegation, nameservers, all_nameservers, issues, responses = lame_delegation_check.process_data(
         subdomain, domain_ns_cache, aggregate_cache)
     # print(f'COMPLETED LAME DELEGATION? {subdomain}')
     all_orgs = format_providers(all_nameservers, ns_cache)
@@ -127,7 +134,9 @@ def process_subdomain(subdomain: str, parent_response, filename):
         'flagged_name_servers': nameservers,
         'all_nameservers': all_nameservers,
         'registrar': registrar,
-        'all_orgs': all_orgs
+        'all_orgs': all_orgs,
+        'connectivity': connectivity,
+        'issues': issues
     })
     data_event.set()
     write_to_file(filename, {'subdomain': subdomain,

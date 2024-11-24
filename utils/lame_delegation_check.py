@@ -29,7 +29,6 @@ def get_ns_records(domain, domain_ns_cache, counter=10):
         domain_ns_cache.set_ns_record(domain, ns_records)
         if not ns_records:
             parent_domain = domain[domain.find('.') + 1:]
-            # print(f"Attempting to get parent level NS {parent_domain}")
             return get_ns_records(parent_domain, domain_ns_cache)
         return ns_records, domain
     except dns.resolver.NoAnswer:
@@ -83,16 +82,10 @@ def query_soa(ns_ip, domain, counter=5):
         response = dns.query.udp(query, ns_ip, timeout=5)
         return response
     except dns.exception.Timeout:
-        print(f"Query to {ns_ip} timed out. for domain {domain}")
-        if counter > 120:
-            print(f"ERROR : complete retries : {ns_ip} for domain {domain}")
-            return None
-        time.sleep(counter)
-        print(f'retrying {ns_ip}... for domain {domain}')
-        return query_soa(ns_ip, domain, counter=counter*3)
+        return None
     except Exception as e:
         print(f"Error querying SOA from {ns_ip}: {e}")
-    return None
+        return None
 
 
 def evaluate_response(response):
@@ -144,44 +137,48 @@ def main(domain, domain_ns_cache, aggregate_cache):
         return {'cached': True, 'lame_delegation': cache_data['lame_delegation'], 'nameservers': cache_data['flagged_name_servers']}
 
     # Step 2: For each NS, resolve its IPs
+    issues = []
+    issues_found = {}
+    responses = {}
     ns_lame = {}
     for ns in ns_records:
         ns_ips = resolve_ns_ips(ns)
 
         if not ns_ips:
             print(f"Flagging nameserver as lame due to unresolved IPs: {ns}")
+            issues_found[ns] = ["Nameserver IPs cannot be resolved" + ns]
             ns_lame[ns] = True
             continue
 
-        # Step 3: Query SOA record on each IP
+        # Query SOA record on each IP
         is_lame = False
         for ip in ns_ips:
-            # print(
-            # f"\nQuerying SOA record for {domain} on nameserver {ns} ({ip})...")
             response = query_soa(ip, domain)
             if not response:
-                return None
+                ns_lame[ns] = True
+                issues_found[ns] = ["No response received when querying SOA"]
+                continue
             issues = evaluate_response(response)
-            if issues:
-                is_lame = True
-            # print(f'{ns}, {issues}')
 
-        if is_lame:
+        if issues:
             ns_lame[ns] = True
+            responses[ns] = response
+            issues_found[ns] = issues
             print(f'{ns} found to be lame with {issues}')
         else:
             ns_lame[ns] = False
     # print(f'Evaluated all Nameservers for {domain}')
-    return ns_lame
+    return ns_lame, issues_found, responses
 
 
 def process_data(subdomain, domain_ns_cache, aggregate_cache):
     print(f'Starting lame delegation check {subdomain}')
-    lame_servers = main(subdomain, domain_ns_cache, aggregate_cache)
+    lame_servers, issues, responses = main(subdomain, domain_ns_cache,
+                                           aggregate_cache)
+    if not lame_servers:
+        return None, [], False
     if 'cached' in lame_servers:
         return lame_servers['lame_delegation'], lame_servers['nameservers']
-    if not lame_servers:
-        return None, []
     final_result = False
     all_nameservers = []
     nameservers_flagged = []
@@ -191,12 +188,4 @@ def process_data(subdomain, domain_ns_cache, aggregate_cache):
             nameservers_flagged.append(ns)
             final_result = True
     print(f'Completed lame delegation check {subdomain}')
-    return final_result, nameservers_flagged, all_nameservers
-
-
-if __name__ == "__main__":
-    zone = "url5347.tesla.com"
-    lame_servers = main(zone)
-    result, flagged = process_data(zone)
-    print(result, flagged)
-    # print(lame_servers)
+    return final_result, nameservers_flagged, all_nameservers, issues, responses

@@ -19,6 +19,11 @@ def get_registrar(domain):
     if match:
         return match.group(2).strip()
     else:
+        registrar_pattern = re.compile(
+            r'(?i)(organisation):\s*(.*)')
+        match = registrar_pattern.search(w)
+        if match:
+            return match.group(2).strip()
         return "Unknown"
 
 
@@ -28,7 +33,6 @@ def get_registrant(domain):
     registrant_pattern = re.compile(r'(?i)Registrant Organization:\s*(.*)')
     match = registrant_pattern.search(w)
     if match:
-        print(match)
         return match.group(1).strip()
     else:
         return "Unknown"
@@ -46,11 +50,13 @@ def get_authoritative_nameservers(domain, domain_ns_cache, registrant_cache):
         nameservers = [str(rr.target).strip('.') for rr in answer]
         domain_ns_cache.set_ns_record(domain, nameservers)
         nameserver_orgs = {}
+        if not nameservers:
+            return None
         for nameserver in nameservers:
             ns_domain = '.'.join(nameserver.split('.')[-2:])
             dns_provider = registrant_cache.get_provider(ns_domain)
             if not dns_provider:
-                time.sleep(3)
+                time.sleep(5)
                 dns_provider = get_registrant(ns_domain)
                 registrant_cache.set_provider(ns_domain, dns_provider)
             nameserver_orgs[nameserver] = dns_provider
@@ -76,6 +82,8 @@ def extract_domain_part(nameserver):
 def check_if_different(domain, parent_response, domain_ns_cache, ns_cache, registrant_cache):
     nameservers = []
     final_result = False
+    connectivity = True
+    time.sleep(5)
     registrar = get_registrar(domain)
     nameservers_orgs = get_authoritative_nameservers(
         domain, domain_ns_cache, registrant_cache)
@@ -83,9 +91,9 @@ def check_if_different(domain, parent_response, domain_ns_cache, ns_cache, regis
     if not nameservers_orgs:
         # print(
         #     f'No nameservers found for {domain}, returning None for registrar Check')
-        return parent_response, registrar
+        connectivity = False
+        return parent_response, registrar, connectivity
     for nameserver in nameservers_orgs:
-        result = False
         print(f'DEBUGGING NAMESERVER IS {nameserver}')
         if fuzz.partial_ratio(registrar, nameservers_orgs[nameserver]) > 80:
             print('Nameserver {} matches. Registrar = {} and NS ORG = {}'.format(
@@ -93,11 +101,10 @@ def check_if_different(domain, parent_response, domain_ns_cache, ns_cache, regis
         else:
             print('Nameserver {} does not match. Registrar = {} and NS ORG = {}'.format(
                 nameserver, registrar, nameservers_orgs[nameserver]))
-            result = True
             final_result = True
         ns_cache.set_ns_record(
             nameserver, {"dns_org": nameservers_orgs[nameserver]})
-    return result, registrar
+    return final_result, registrar, connectivity
 
 
 def process_data(subdomain, parent_response, domain_ns_cache, ns_cache, registrant_cache):

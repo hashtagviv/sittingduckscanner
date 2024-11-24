@@ -20,12 +20,12 @@ class NSCache:
         self.ns_records = {}
         self.lock = threading.Lock()
 
-    def get_ns_record(self, nameserver, optional=""):
+    def get_ns_record(self, nameserver, option=""):
         with self.lock:
-            if optional:
+            if option:
                 record = self.ns_records.get(nameserver)
-                if record and optional in record:
-                    return record[optional]
+                if record and option in record:
+                    return record[option]
             else:
                 return None
             return self.ns_records.get(nameserver)
