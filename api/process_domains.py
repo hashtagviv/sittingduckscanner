@@ -70,7 +70,7 @@ async def main(domain: str):
     processing = 1
     filename = initialize_file(generate_filename(domain))
     executor = ThreadPoolExecutor(max_workers=10)
-    parent_domain_dns_registrar_diff, registrar, connectivity = registrar_check.check_if_different(
+    parent_domain_dns_registrar_diff, registrar, connectivity = registrar_check.check_if_use_DNS_provider_differnt(
         domain, None, domain_ns_cache, ns_cache, registrant_cache)
     lame_delegation_answer, flagged_nameservers, all_nameservers, issues, responses = lame_delegation_check.process_data(
         domain, domain_ns_cache, aggregate_cache)

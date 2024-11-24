@@ -79,7 +79,7 @@ def extract_domain_part(nameserver):
     return '.'.join(nameserver.split('.')[1:])
 
 
-def check_if_different(domain, parent_response, domain_ns_cache, ns_cache, registrant_cache):
+def check_if_use_DNS_provider_differnt(domain, parent_response, domain_ns_cache, ns_cache, registrant_cache):
     nameservers = []
     final_result = False
     connectivity = True
@@ -98,6 +98,9 @@ def check_if_different(domain, parent_response, domain_ns_cache, ns_cache, regis
         if fuzz.partial_ratio(registrar, nameservers_orgs[nameserver]) > 80:
             print('Nameserver {} matches. Registrar = {} and NS ORG = {}'.format(
                 nameserver, registrar, nameservers_orgs[nameserver]))
+        elif fuzz.partial_ratio(registrar, domain) > 80:
+            print('Nameserver {} is owned by Domain = {}'.format(
+                nameserver, domain))
         else:
             print('Nameserver {} does not match. Registrar = {} and NS ORG = {}'.format(
                 nameserver, registrar, nameservers_orgs[nameserver]))
@@ -106,10 +109,9 @@ def check_if_different(domain, parent_response, domain_ns_cache, ns_cache, regis
             nameserver, {"dns_org": nameservers_orgs[nameserver]})
     return final_result, registrar, connectivity
 
-
 def process_data(subdomain, parent_response, domain_ns_cache, ns_cache, registrant_cache):
     # print(f"Received new domain for registrar check: {subdomain}")
-    final_result = check_if_different(
+    final_result = check_if_use_DNS_provider_differnt(
         subdomain, parent_response, domain_ns_cache, ns_cache, registrant_cache)
     print(f'Completed Registrar check {subdomain}')
     return final_result
