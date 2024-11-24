@@ -1,10 +1,11 @@
+MAX_THREADS = 4
 class ProcessorsAvailable:
     def __init__(self):
-        self.processors = 1
+        self.processors = MAX_THREADS
 
 
     def add_tasks(self):
-        self.processors -= self.processors
+        self.processors -= 1
 
     def remaining_tasks(self):
         print(f'REMAINING PROCESSORS {self.processors}')
