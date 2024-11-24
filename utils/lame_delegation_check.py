@@ -29,6 +29,7 @@ def get_ns_records(domain, domain_ns_cache, counter=10):
         domain_ns_cache.set_ns_record(domain, ns_records)
         if not ns_records:
             parent_domain = domain[domain.find('.') + 1:]
+            domain_ns_cache.set_ns_record(domain, dns.resolver.NoAnswer)
             return get_ns_records(parent_domain, domain_ns_cache)
         return ns_records, domain
     except dns.resolver.NoAnswer:
@@ -45,10 +46,11 @@ def get_ns_records(domain, domain_ns_cache, counter=10):
         return get_ns_records(parent_domain, domain_ns_cache)
     except Exception as e:
         print(f"Error retrieving NS records for {domain}: {e}")
-        if counter > 120:
+        if counter > 20:
             return [], ""
         time.sleep(counter)
-        return get_ns_records(domain, domain_ns_cache, counter=counter*3)
+        parent_domain = domain[domain.find('.') + 1:]
+        return get_ns_records(parent_domain, domain_ns_cache, counter=counter*3)
 
 
 def resolve_ns_ips(ns_name):
