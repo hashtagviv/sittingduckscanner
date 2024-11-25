@@ -39,8 +39,9 @@ async def start_subdomain_processing(request: DomainRequest, background_tasks: B
     # Check if tasks can be added
     if processing_task.remaining_tasks():
         processing_task.add_tasks()
-        background_tasks.add_task(run, main, request.domain, time_limit=request.time_limit,
-                                  related_domains=request.related_domains, active=request.active)
+        request_data = (request.domain, request.time_limit,
+                        request.related_domains, request.active)
+        background_tasks.add_task(run, main, *request_data)
         return {"status": "started", "message": f"Subdomain processing started for {request.domain}"}
     else:
         raise HTTPException(
