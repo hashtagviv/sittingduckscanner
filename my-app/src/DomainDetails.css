@@ -1,0 +1,307 @@
+/* DomainDetails.css */
+
+.domain-details {
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+}
+
+.domain-status {
+    margin-top: 0;
+    font-size: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.domain-status.safe {
+    color: #4caf50;
+    /* Green */
+}
+
+.domain-status.vulnerable {
+    color: #e74c3c;
+    /* Red */
+}
+
+.domain-name-box {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 20px 0;
+}
+
+.domain-name-box.safe {
+    background-color: #e8f5e9;
+    /* Light green */
+}
+
+.domain-name-box.vulnerable {
+    background-color: #fdecea;
+    /* Light red */
+}
+
+.domain-name-box h3 {
+    margin-top: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #777;
+}
+
+.domain-name-box p {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 5px 0 0 0;
+    color: #333;
+}
+
+.registrar-info {
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 10px;
+    color: #555;
+}
+
+.domain-info {
+    margin-top: 20px;
+}
+
+.domain-info p {
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+.domain-info strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.status-indicator {
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: #fff;
+}
+
+.status-indicator.good {
+    background-color: #4caf50;
+    /* Green */
+}
+
+.status-indicator.warning {
+    background-color: #f1c40f;
+    /* Yellow */
+}
+
+.domain-info h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin-top: 20px;
+}
+
+.nameservers-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.nameservers-table th,
+.nameservers-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.nameservers-table th {
+    background-color: #f2f2f2;
+    font-weight: 600;
+}
+
+.flagged-nameserver td {
+    background-color: #ffe6e6;
+    /* Light red background */
+    color: #e74c3c;
+    /* Red text */
+}
+
+.nameservers-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+@media screen and (max-width: 600px) {
+    .domain-name-box p {
+        font-size: 20px;
+    }
+
+    .nameservers-table th,
+    .nameservers-table td {
+        padding: 8px;
+    }
+}
+
+/* Collapsible Section Styles */
+.collapsible-section {
+    margin-top: 20px;
+}
+
+.collapsible-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.collapsible-header strong {
+    flex: 1;
+}
+
+.collapsible-header .status-indicator {
+    margin-left: 10px;
+}
+
+.collapsible-header .arrow {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #333;
+    margin-left: 10px;
+    transition: transform 0.2s;
+}
+
+.collapsible-header .arrow.open {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    margin-top: 10px;
+}
+
+.collapsible-content p {
+    margin: 10px 0;
+}
+
+.collapsible-content a {
+    color: #1e88e5;
+    text-decoration: none;
+}
+
+.collapsible-content a:hover {
+    text-decoration: underline;
+}
+
+.code-box {
+    background-color: #2d2d2d;
+    color: #f8f8f2;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    margin-top: 10px;
+    overflow-x: auto;
+}
+
+.code-box pre {
+    margin: 0;
+}
+
+/* Existing styles... */
+
+/* Status Box Styles */
+.status-box {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+.status-box.good {
+    background-color: #e8f5e9;
+    /* Light green */
+}
+
+.status-box.warning {
+    background-color: #fff8e1;
+    /* Light yellow */
+}
+
+.status-box-header {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.status-box-header strong {
+    flex: 1;
+}
+
+.status-box-header .status-indicator {
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: #fff;
+    margin-left: 10px;
+}
+
+.status-box.good .status-box-header .status-indicator {
+    background-color: #4caf50;
+    /* Green */
+}
+
+.status-box.warning .status-box-header .status-indicator {
+    background-color: #f1c40f;
+    /* Yellow */
+    color: #333;
+}
+
+.status-box-header .arrow {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #333;
+    margin-left: 10px;
+    transition: transform 0.2s;
+}
+
+.status-box-header .arrow.open {
+    transform: rotate(180deg);
+}
+
+.status-box-content {
+    margin-top: 10px;
+}
+
+.status-box-content p {
+    margin: 10px 0;
+}
+
+.status-box-content a {
+    color: #1e88e5;
+    text-decoration: none;
+}
+
+.status-box-content a:hover {
+    text-decoration: underline;
+}
+
+.code-box {
+    background-color: #2d2d2d;
+    color: #f8f8f2;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    margin-top: 10px;
+    overflow-x: auto;
+}
+
+.code-box pre {
+    margin: 0;
+}
+
+/* Hide arrow for non-collapsible boxes */
+.status-box-header[style*="cursor: default"] .arrow {
+    display: none;
+}

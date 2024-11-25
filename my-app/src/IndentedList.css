@@ -1,0 +1,96 @@
+/* IndentedList.css */
+
+.indented-list {
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.4;
+    color: #333;
+    width: 100%;
+    margin: 0;
+}
+
+.node-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 6px 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.2s, border-color 0.2s;
+    font-size: 14px;
+}
+
+.node-item:hover {
+    background-color: #f1f1f1;
+}
+
+.node-item.vulnerable {
+    border-color: #e74c3c;
+}
+
+.node-item.safe {
+    border-color: #42a5f5;
+}
+
+.node-item.selected {
+    background-color: #e0f7fa;
+    border-color: #26c6da;
+}
+
+.node-name {
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.node-name.root-node {
+    font-weight: 600;
+}
+
+.node-bubble {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.node-bubble.safe {
+    background-color: #4caf50;
+}
+
+.node-bubble.vulnerable {
+    background-color: #e74c3c;
+}
+
+/* Adjust indentation using margin-left */
+.node-item.depth-0 {
+    margin-left: 0px;
+}
+
+.node-item.depth-1 {
+    margin-left: 16px;
+}
+
+.node-item.depth-2 {
+    margin-left: 32px;
+}
+
+.node-item.depth-3 {
+    margin-left: 48px;
+}
+
+.node-item.depth-4 {
+    margin-left: 64px;
+}
+
+.node-item.depth-5 {
+    margin-left: 80px;
+}
+
+
+/* Highlight Selected Node */
+.node-item.selected {
+    background-color: #e0f7fa;
+    border-color: #26c6da;
+}
