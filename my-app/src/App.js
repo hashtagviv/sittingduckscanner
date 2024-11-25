@@ -34,45 +34,57 @@ export default function App() {
         setElapsedTime((prevTime) => prevTime + 1);
       }, 1000);
 
-      const response = await fetch("/message1.txt");
-      const fileContent = await response.text();
-
-      // Process file content into lines
-      const lines = fileContent.split("\n").filter(Boolean);
-      const parsedData = lines.map((line) => JSON.parse(line));
-
-      // Batch loading in random groups of 3 to 10
-      const batches = [];
-      let index = 0;
-      while (index < parsedData.length) {
-        const batchSize = Math.floor(Math.random() * 8) + 3; // Random size between 3 and 10
-        const batch = parsedData.slice(index, index + batchSize);
-        batches.push(batch);
-        index += batchSize;
+      const startResponse = await fetch("http://localhost:8000/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({domain: searchTerm})
+      });
+      
+      if (!startResponse.ok) {
+        throw new Error(`Backend server cannot process the domain: ${startResponse.status}`);
       }
 
-      const totalBatches = batches.length;
-      const allNodes = [];
+      const streamResponse = await fetch("http://localhost:8000/stream", {
+        method: "GET",
+      });
+  
+      if (!streamResponse.ok) {
+        throw new Error(`Failed to fetch stream data: ${streamResponse.status}`);
+      }
 
-      const loadBatch = (batchIndex) => {
-        if (batchIndex >= totalBatches) {
-          setLoading(false); // All batches loaded
-          setScanningCompleted(true); // Set scanning completed status
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current); // Stop timer
+      const reader = streamResponse.body.getReader();
+      const decoder = new TextDecoder();
+  
+      let allNodes = [];
+      let readFlag = true;
+      while (readFlag) {
+        const { value } = await reader.read();
+  
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n").filter(Boolean);
+        const filteredLines = lines.filter((line) => line.startsWith("data:"));
+
+        const jsonLines = filteredLines.map((line) => {
+          return line.replace("data: ", "");
+        });
+ 
+        const parsedData = jsonLines.map((jsonLine) => {
+          return JSON.parse(jsonLine);
+        });
+
+        let newNodes = [];
+        for (const item of parsedData) {
+          if (item.status === "complete") {
+            readFlag = false; 
+            break;
           }
-          return;
-        }
-
-        const batch = batches[batchIndex];
-
-        // Compute 'vulnerable' based on 'lame_delegation' and 'registrar_dns_different'
-        const newNodes = batch.map((item) => {
+        
           const isVulnerable =
-            item.lame_delegation === true &&
-            item.registrar_dns_different === true;
-
-          return {
+            item.lame_delegation === true && item.registrar_dns_different === true;
+        
+          newNodes.push({
             name: item.subdomain,
             depth: item.depth,
             vulnerable: isVulnerable,
@@ -80,26 +92,22 @@ export default function App() {
             lame_delegation: item.lame_delegation,
             flagged_name_servers: item.flagged_name_servers,
             all_nameservers: item.all_nameservers,
-          };
-        });
-
+          });
+        }
+  
         allNodes.push(...newNodes);
-        setDomainData([...allNodes]); // Update the flat list of nodes
-
+        setDomainData([...allNodes]);
+  
         // Update counts
         setTotalDomainsScanned((prevCount) => prevCount + newNodes.length);
-        const vulnerableCount = newNodes.filter(
-          (node) => node.vulnerable
-        ).length;
+        const vulnerableCount = newNodes.filter((node) => node.vulnerable).length;
         setTotalVulnerableDomains((prevCount) => prevCount + vulnerableCount);
+      }
 
-        // Simulate delay for the next batch (1 to 5 seconds)
-        const delay = Math.floor(Math.random() * 30000) + 8000;
-        setTimeout(() => loadBatch(batchIndex + 1), delay);
-      };
 
-      // Start loading batches
-      loadBatch(0);
+      setLoading(false);
+      setScanningCompleted(true);
+
     } catch (error) {
       console.error("Error fetching or processing message.txt:", error);
       setLoading(false);
