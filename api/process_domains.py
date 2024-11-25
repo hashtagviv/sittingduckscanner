@@ -65,14 +65,14 @@ def format_providers(nameservers, ns_cache):
     return orgs
 
 
-async def main(domain: str):
+async def main(domain: str, time_limit=float('inf'), related_domains=[], active=True):
     global processing, domains_processed, domain_ns_cache, aggregate_cache, ns_cache, registrant_cache
     processing = 1
     filename = initialize_file(generate_filename(domain))
     executor = ThreadPoolExecutor(max_workers=10)
     parent_domain_dns_registrar_diff, registrar, connectivity = registrar_check.check_if_different(
         domain, None, domain_ns_cache, ns_cache, registrant_cache)
-    lame_delegation_answer, flagged_nameservers, all_nameservers, issues, responses = lame_delegation_check.process_data(
+    lame_delegation_answer, flagged_nameservers, all_nameservers, issues = lame_delegation_check.process_data(
         domain, domain_ns_cache, aggregate_cache)
     all_orgs = format_providers(all_nameservers, ns_cache)
     aggregate_cache.set(domain, {
@@ -89,7 +89,7 @@ async def main(domain: str):
     write_to_file(filename, {'subdomain': domain,
                   **aggregate_cache.get(domain)})
     data_event.set()
-    async for subdomain in subdomain_enumeration(domain):
+    async for subdomain in subdomain_enumeration(domain, related_domains=related_domains, active=active):
         executor.submit(process_subdomain, subdomain,
                         parent_domain_dns_registrar_diff, filename)
     print(f'execution completed for domain {domain}')
@@ -122,7 +122,7 @@ def process_subdomain(subdomain: str, parent_response, filename):
         subdomain, parent_response, domain_ns_cache, ns_cache, registrant_cache)
 
     # print(f'START LAME DELEGATION CHECK {subdomain}')
-    lame_delegation, nameservers, all_nameservers, issues, responses = lame_delegation_check.process_data(
+    lame_delegation, nameservers, all_nameservers, issues = lame_delegation_check.process_data(
         subdomain, domain_ns_cache, aggregate_cache)
     # print(f'COMPLETED LAME DELEGATION? {subdomain}')
     all_orgs = format_providers(all_nameservers, ns_cache)
