@@ -1,7 +1,7 @@
 # main.py
 import asyncio
 import threading
-import argparse
+import time
 import json
 from concurrent.futures import ThreadPoolExecutor
 from asyncio import Queue
@@ -65,14 +65,16 @@ def format_providers(nameservers, ns_cache):
     return orgs
 
 
-async def main(domain: str):
+async def main(domain="", time_limit=float('inf'), related_domains=[], active=True):
     global processing, domains_processed, domain_ns_cache, aggregate_cache, ns_cache, registrant_cache
     processing = 1
     filename = initialize_file(generate_filename(domain))
     executor = ThreadPoolExecutor(max_workers=10)
+    # Record the start time
+    start_time = time.time()
     parent_domain_dns_registrar_diff, registrar, connectivity = registrar_check.check_if_use_DNS_provider_differnt(
         domain, None, domain_ns_cache, ns_cache, registrant_cache)
-    lame_delegation_answer, flagged_nameservers, all_nameservers, issues, responses = lame_delegation_check.process_data(
+    lame_delegation_answer, flagged_nameservers, all_nameservers, issues = lame_delegation_check.process_data(
         domain, domain_ns_cache, aggregate_cache)
     all_orgs = format_providers(all_nameservers, ns_cache)
     aggregate_cache.set(domain, {
@@ -89,9 +91,17 @@ async def main(domain: str):
     write_to_file(filename, {'subdomain': domain,
                   **aggregate_cache.get(domain)})
     data_event.set()
-    async for subdomain in subdomain_enumeration(domain):
+    async for subdomain in subdomain_enumeration(domain, related_domains=related_domains, active=active):
+        elapsed_time = time.time() - start_time
+        if time_limit != float('inf'):
+            print(
+                f'elapsed time is {elapsed_time}, time limit is {time_limit}')
+        if elapsed_time >= time_limit:
+            print(f"Stopping enumeration due to time limit.")
+            break
         executor.submit(process_subdomain, subdomain,
                         parent_domain_dns_registrar_diff, filename)
+
     print(f'execution completed for domain {domain}')
     processing = 0
     processing_task.completed_execution()
@@ -122,7 +132,7 @@ def process_subdomain(subdomain: str, parent_response, filename):
         subdomain, parent_response, domain_ns_cache, ns_cache, registrant_cache)
 
     # print(f'START LAME DELEGATION CHECK {subdomain}')
-    lame_delegation, nameservers, all_nameservers, issues, responses = lame_delegation_check.process_data(
+    lame_delegation, nameservers, all_nameservers, issues = lame_delegation_check.process_data(
         subdomain, domain_ns_cache, aggregate_cache)
     # print(f'COMPLETED LAME DELEGATION? {subdomain}')
     all_orgs = format_providers(all_nameservers, ns_cache)
@@ -161,9 +171,3 @@ async def stream_subdomain_data():
         yield 'data: {"status": "complete"}\n\n'
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
-# if __name__ == "__main__":
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("domain", type=str, help="The domain to enumerate")
-#     args = parser.parse_args()
-#     asyncio.run(main(args.domain))

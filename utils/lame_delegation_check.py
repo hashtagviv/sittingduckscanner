@@ -170,13 +170,13 @@ def main(domain, domain_ns_cache, aggregate_cache):
         else:
             ns_lame[ns] = False
     # print(f'Evaluated all Nameservers for {domain}')
-    return ns_lame, issues_found, responses
+    return ns_lame, issues_found
 
 
 def process_data(subdomain, domain_ns_cache, aggregate_cache):
     print(f'Starting lame delegation check {subdomain}')
-    lame_servers, issues, responses = main(subdomain, domain_ns_cache,
-                                           aggregate_cache)
+    lame_servers, issues = main(subdomain, domain_ns_cache,
+                                aggregate_cache)
     if not lame_servers:
         return None, [], False
     if 'cached' in lame_servers:
@@ -190,4 +190,4 @@ def process_data(subdomain, domain_ns_cache, aggregate_cache):
             nameservers_flagged.append(ns)
             final_result = True
     print(f'Completed lame delegation check {subdomain}')
-    return final_result, nameservers_flagged, all_nameservers, issues, responses
+    return final_result, nameservers_flagged, all_nameservers, issues
