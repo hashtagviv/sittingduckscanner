@@ -39,7 +39,12 @@ export default function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({domain: searchTerm})
+        body: JSON.stringify({
+          domain: searchTerm,
+          time_limit: 10000,
+          related_domains: [],
+          active: true
+        }),
       });
       
       if (!startResponse.ok) {
