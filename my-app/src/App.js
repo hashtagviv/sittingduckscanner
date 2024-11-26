@@ -17,6 +17,35 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState(null);
 
   const intervalRef = useRef(null);
+  const readerRef = useRef(null);
+
+  const handleStop = async () => {
+    try {
+      // Signal the backend to stop
+      const stopResponse = await fetch("http://localhost:8000/stop", {
+        method: "POST",
+      });
+
+      if (!stopResponse.ok) {
+        throw new Error(`Failed to stop scanning: ${stopResponse.status}`);
+      }
+
+      if (readerRef.current) {
+        readerRef.current.cancel();
+      }
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      setLoading(false);
+      setScanningCompleted(false);
+      setErrorMessage(null);
+    } catch (error) {
+      console.error("Error stopping scanning:", error);
+      setErrorMessage(error.message || "An unexpected error occurred.");
+    }
+  };
 
   const handleSearch = async () => {
     try {
@@ -65,6 +94,7 @@ export default function App() {
       }
 
       const reader = streamResponse.body.getReader();
+      readerRef.current = reader;
       const decoder = new TextDecoder();
 
       let allNodes = [];
@@ -121,6 +151,11 @@ export default function App() {
         setTotalVulnerableDomains((prevCount) => prevCount + vulnerableCount);
       }
 
+      if (readerRef.current) {
+        await readerRef.current.cancel();
+        readerRef.current = null;
+      }
+
       setLoading(false);
       setScanningCompleted(true);
     } catch (error) {
@@ -130,6 +165,11 @@ export default function App() {
         clearInterval(intervalRef.current);
       }
       setErrorMessage(error.message || "An unexpected error occurred.");
+    } finally {
+      if (readerRef.current) {
+        await readerRef.current.cancel();
+        readerRef.current = null;
+      }
     }
   };
 
@@ -155,6 +195,11 @@ export default function App() {
           placeholder="example.com"
         />
         <button onClick={handleSearch}>Check Domain</button>
+        {loading && (
+          <button onClick={handleStop} className="stop-button">
+            Stop Scanning
+          </button>
+        )}
       </div>
       {loading && <div className="scanning-text">Scanning...</div>}
       <div className="status-bar">

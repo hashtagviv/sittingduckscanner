@@ -56,6 +56,25 @@ html {
   border-radius: 4px 0 0 4px;
   font-size: 16px;
 }
+/* Stop Button Styles */
+.search-bar .stop-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #ca6f65;
+  /* Red color for stop */
+  color: #fff;
+  /* White text */
+  font-size: 16px;
+  cursor: pointer;
+  margin-left: 10px;
+  /* Adds separation between buttons */
+  border-radius: 4px;
+}
+
+.stop-button:hover {
+  background-color: #c0392b;
+  /* Darker red on hover */
+}
 
 .search-bar button {
   padding: 10px 20px;
@@ -264,3 +283,4 @@ html {
   opacity: 0.5;
   /* Slightly transparent for subtlety */
 }
+
