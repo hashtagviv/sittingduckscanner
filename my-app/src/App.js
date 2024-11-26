@@ -2,7 +2,7 @@
 import React, { useState, useRef } from "react";
 import "./App.css";
 import IndentedList from "./IndentedList";
-import DomainDetails from "./DomainDetails"; // New component
+import DomainDetails from "./DomainDetails";
 import logo from "./logo.webp";
 
 export default function App() {
@@ -14,6 +14,7 @@ export default function App() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [scanningCompleted, setScanningCompleted] = useState(false); // New state variable
   const [selectedDomain, setSelectedDomain] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const intervalRef = useRef(null);
 
@@ -25,7 +26,7 @@ export default function App() {
       setTotalVulnerableDomains(0);
       setDomainData([]);
       setElapsedTime(0);
-
+      setErrorMessage(null);
       // Start timer
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -41,32 +42,36 @@ export default function App() {
         },
         body: JSON.stringify({
           domain: searchTerm,
-          time_limit: 10000,
           related_domains: [],
-          active: true
+          time_limit: 100000,
+          active: 1,
         }),
       });
-      
+
       if (!startResponse.ok) {
-        throw new Error(`Backend server cannot process the domain: ${startResponse.status}`);
+        throw new Error(
+          `Backend server cannot process the domain: ${startResponse.status}`
+        );
       }
 
       const streamResponse = await fetch("http://localhost:8000/stream", {
         method: "GET",
       });
-  
+
       if (!streamResponse.ok) {
-        throw new Error(`Failed to fetch stream data: ${streamResponse.status}`);
+        throw new Error(
+          `Failed to fetch stream data: ${streamResponse.status}`
+        );
       }
 
       const reader = streamResponse.body.getReader();
       const decoder = new TextDecoder();
-  
+
       let allNodes = [];
       let readFlag = true;
       while (readFlag) {
         const { value } = await reader.read();
-  
+
         const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split("\n").filter(Boolean);
         const filteredLines = lines.filter((line) => line.startsWith("data:"));
@@ -74,7 +79,7 @@ export default function App() {
         const jsonLines = filteredLines.map((line) => {
           return line.replace("data: ", "");
         });
- 
+
         const parsedData = jsonLines.map((jsonLine) => {
           return JSON.parse(jsonLine);
         });
@@ -82,13 +87,14 @@ export default function App() {
         let newNodes = [];
         for (const item of parsedData) {
           if (item.status === "complete") {
-            readFlag = false; 
+            readFlag = false;
             break;
           }
-        
+
           const isVulnerable =
-            item.lame_delegation === true && item.registrar_dns_different === true;
-        
+            item.lame_delegation === true &&
+            item.registrar_dns_different === true;
+
           newNodes.push({
             name: item.subdomain,
             depth: item.depth,
@@ -97,28 +103,33 @@ export default function App() {
             lame_delegation: item.lame_delegation,
             flagged_name_servers: item.flagged_name_servers,
             all_nameservers: item.all_nameservers,
+            dns_providers: item.all_orgs,
+            registrar: item.registrar,
+            connectivity: item.connectivity,
+            issues: item.issues,
           });
         }
-  
+
         allNodes.push(...newNodes);
         setDomainData([...allNodes]);
-  
+
         // Update counts
         setTotalDomainsScanned((prevCount) => prevCount + newNodes.length);
-        const vulnerableCount = newNodes.filter((node) => node.vulnerable).length;
+        const vulnerableCount = newNodes.filter(
+          (node) => node.vulnerable
+        ).length;
         setTotalVulnerableDomains((prevCount) => prevCount + vulnerableCount);
       }
 
-
       setLoading(false);
       setScanningCompleted(true);
-
     } catch (error) {
-      console.error("Error fetching or processing message.txt:", error);
+      console.error("Error during scanning:", error);
       setLoading(false);
       if (intervalRef.current) {
-        clearInterval(intervalRef.current); // Stop timer in case of error
+        clearInterval(intervalRef.current);
       }
+      setErrorMessage(error.message || "An unexpected error occurred.");
     }
   };
 
@@ -172,6 +183,17 @@ export default function App() {
           )}
         </div>
       </div>
+      {/* Error Message Modal */}
+      {errorMessage && (
+        <>
+          <div className="completed-overlay"></div>
+          <div className="completed-box error">
+            <h2>Error Occurred</h2>
+            <p>{errorMessage}</p>
+            <button onClick={() => setErrorMessage(null)}>Close</button>
+          </div>
+        </>
+      )}
       {scanningCompleted && (
         <>
           <div className="completed-overlay"></div>

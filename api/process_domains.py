@@ -70,7 +70,6 @@ async def main(domain="", time_limit=float('inf'), related_domains=[], active=Tr
     processing = 1
     filename = initialize_file(generate_filename(domain))
     executor = ThreadPoolExecutor(max_workers=10)
-    # Record the start time
     start_time = time.time()
     parent_domain_dns_registrar_diff, registrar, connectivity = registrar_check.check_if_use_DNS_provider_differnt(
         domain, None, domain_ns_cache, ns_cache, registrant_cache)

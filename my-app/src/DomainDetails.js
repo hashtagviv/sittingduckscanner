@@ -57,9 +57,21 @@ const DomainDetails = ({ domain }) => {
                   Learn more about the risks of lame delegation DNS resolution.
                 </a>
               </p>
-              <div className="code-box">
-                <pre>AA bit set but answer section is empty</pre>
-              </div>
+              <h4>Issues:</h4>
+              {domain.issues && Object.keys(domain.issues).length > 0 ? (
+                Object.entries(domain.issues).map(([nameserver, issues]) => (
+                  <div key={nameserver}>
+                    <strong>Nameserver : {nameserver}</strong>
+                    <ul>
+                      {issues.map((issue, index) => (
+                        <li key={index}>{issue}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              ) : (
+                <p>No specific issues found.</p>
+              )}
             </div>
           )}
         </div>
@@ -98,7 +110,7 @@ const DomainDetails = ({ domain }) => {
                 }
               >
                 <td>{ns}</td>
-                <td>Amazon Web Services</td> {/* Placeholder value */}
+                <td>{domain.dns_providers[index] || "Unknown"}</td>
               </tr>
             ))}
           </tbody>
