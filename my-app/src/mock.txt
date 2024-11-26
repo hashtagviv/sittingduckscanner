@@ -1,0 +1,2 @@
+{"subdomain": "tesla.com", "depth": 0, "registrar_dns_different": true, "lame_delegation": false, "flagged_name_servers": [], "all_nameservers": ["a12-64.akam.net", "a9-67.akam.net", "a28-65.akam.net", "a1-12.akam.net", "edns69.ultradns.com", "a7-66.akam.net", "a10-67.akam.net"]}
+{"subdomain": "pub.email.tesla.com", "depth": 2, "registrar_dns_different": true, "lame_delegation": false, "flagged_name_servers": [], "all_nameservers": ["edns69.ultradns.com", "edns69.ultradns.net", "edns69.ultradns.org", "edns69.ultradns.biz"]}
