@@ -37,10 +37,13 @@ export default function App() {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-
       setLoading(false);
       setScanningCompleted(false);
       setErrorMessage(null);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     } catch (error) {
       console.error("Error stopping scanning:", error);
       setErrorMessage(error.message || "An unexpected error occurred.");
@@ -50,16 +53,14 @@ export default function App() {
   const handleSearch = async () => {
     try {
       setLoading(true);
-      setScanningCompleted(false); // Reset scanning completed status
+      setScanningCompleted(false);
       setTotalDomainsScanned(0);
       setTotalVulnerableDomains(0);
       setDomainData([]);
       setElapsedTime(0);
       setErrorMessage(null);
       // Start timer
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+
       intervalRef.current = setInterval(() => {
         setElapsedTime((prevTime) => prevTime + 1);
       }, 1000);

@@ -1,7 +1,7 @@
 from typing import Optional, List
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from api.process_domains import main, stream_subdomain_data, processing_task
+from api.process_domains import main, stream_subdomain_data, processing_task, cancellation_event
 from classes.processors import MAX_THREADS
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -11,6 +11,22 @@ router = APIRouter()
 
 # Configure the ThreadPoolExecutor with a max number of threads
 executor = ThreadPoolExecutor(max_workers=MAX_THREADS)
+
+
+@router.post("/stop")
+async def stop_subdomain_processing():
+    """
+    Signal the backend to stop subdomain processing.
+    """
+    if not processing_task.remaining_tasks():
+        raise HTTPException(
+            status_code=400, detail="No processing task is currently running.")
+
+    # Set the cancellation event
+    cancellation_event.set()
+    # Update the processing task status
+    processing_task.cancel_tasks()
+    return {"status": "stopping", "message": "Subdomain processing is stopping."}
 
 
 class DomainRequest(BaseModel):

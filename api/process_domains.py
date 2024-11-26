@@ -25,6 +25,7 @@ file_lock = threading.Lock()
 domain_ns_cache, ns_cache, registrant_cache = DomainNSCache(), NSCache(), RegistrantCache()
 aggregate_cache = AggregateDataCache()
 data_event = asyncio.Event()
+cancellation_event = asyncio.Event()
 processing_task = ProcessorsAvailable()
 processing = 0
 
@@ -66,7 +67,8 @@ def format_providers(nameservers, ns_cache):
 
 
 async def main(domain="", time_limit=float('inf'), related_domains=[], active=True):
-    global processing, domains_processed, domain_ns_cache, aggregate_cache, ns_cache, registrant_cache
+    global processing, domains_processed, domain_ns_cache, aggregate_cache, ns_cache, registrant_cache, cancellation_event
+    # cancellation_event = threading.Event()
     processing = 1
     filename = initialize_file(generate_filename(domain))
     executor = ThreadPoolExecutor(max_workers=10)
@@ -96,15 +98,21 @@ async def main(domain="", time_limit=float('inf'), related_domains=[], active=Tr
             print(
                 f'elapsed time is {elapsed_time}, time limit is {time_limit}')
         if elapsed_time >= time_limit:
+            cancellation_event.set()
             print(f"Stopping enumeration due to time limit.")
             break
+
+        if cancellation_event.is_set():
+            print("Cancellation requested. Stopping processing.")
+            break
         executor.submit(process_subdomain, subdomain,
-                        parent_domain_dns_registrar_diff, filename)
+                        parent_domain_dns_registrar_diff, filename, cancellation_event)
 
     print(f'execution completed for domain {domain}')
     processing = 0
     processing_task.completed_execution()
     data_event.set()
+    cancellation_event.clear()
     # clear cache
     domains_processed = set()
     domain_ns_cache, ns_cache, registrant_cache = DomainNSCache(), NSCache(), RegistrantCache()
@@ -112,11 +120,14 @@ async def main(domain="", time_limit=float('inf'), related_domains=[], active=Tr
     aggregate_cache = AggregateDataCache()
 
 
-def process_subdomain(subdomain: str, parent_response, filename):
+def process_subdomain(subdomain: str, parent_response, filename, cancellation_event):
     """
     This runs in a separate thread for each subdomain.
     """
     print(f'PROCESSING subdomain {subdomain}')
+    if cancellation_event.is_set():
+        print(f"Processing of {subdomain} cancelled.")
+        return
     subdomain = subdomain.replace('www.', '')
     depth = subdomain.count('.') - 1
     try:
