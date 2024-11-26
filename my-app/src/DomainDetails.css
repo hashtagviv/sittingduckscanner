@@ -305,3 +305,11 @@
 .status-box-header[style*="cursor: default"] .arrow {
     display: none;
 }
+
+.connectivity-success {
+    color: green;
+}
+
+.connectivity-failure {
+    color: red;
+}

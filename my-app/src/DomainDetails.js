@@ -9,6 +9,10 @@ const DomainDetails = ({ domain }) => {
   const toggleLameDelegation = () => {
     setIsLameDelegationOpen(!isLameDelegationOpen);
   };
+  const connectivityText = domain.connectivity ? "Success" : "Failed";
+  const connectivityClass = domain.connectivity
+    ? "connectivity-success"
+    : "connectivity-failure";
 
   return (
     <div className="domain-details">
@@ -20,8 +24,10 @@ const DomainDetails = ({ domain }) => {
       >
         <h3>Domain</h3>
         <p>{domain.name}</p>
-        <p className="registrar-info">
-          Registrar: {domain.registrar || "MarkMonitor Inc"}
+        <p className="registrar-info">Registrar: {domain.registrar}</p>
+        <p>
+          Connectivity:{" "}
+          <span className={connectivityClass}>{connectivityText}</span>
         </p>
       </div>
       <div className="domain-info">

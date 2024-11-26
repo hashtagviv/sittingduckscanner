@@ -30,20 +30,9 @@ export default function App() {
         throw new Error(`Failed to stop scanning: ${stopResponse.status}`);
       }
 
-      if (readerRef.current) {
-        readerRef.current.cancel();
-      }
-
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
       setLoading(false);
       setScanningCompleted(false);
       setErrorMessage(null);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
     } catch (error) {
       console.error("Error stopping scanning:", error);
       setErrorMessage(error.message || "An unexpected error occurred.");
@@ -159,12 +148,13 @@ export default function App() {
 
       setLoading(false);
       setScanningCompleted(true);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     } catch (error) {
       console.error("Error during scanning:", error);
       setLoading(false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
       setErrorMessage(error.message || "An unexpected error occurred.");
     } finally {
       if (readerRef.current) {
@@ -247,6 +237,7 @@ export default function App() {
             <h2>Scanning Completed</h2>
             <p>Total Domains Scanned: {totalDomainsScanned}</p>
             <p>Vulnerable Domains Found: {totalVulnerableDomains}</p>
+            <p>Time Elapsed: {formatTime(elapsedTime)}</p>
             <button onClick={() => setScanningCompleted(false)}>Close</button>
           </div>
         </>

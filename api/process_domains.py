@@ -94,9 +94,6 @@ async def main(domain="", time_limit=float('inf'), related_domains=[], active=Tr
     data_event.set()
     async for subdomain in subdomain_enumeration(domain, related_domains=related_domains, active=active):
         elapsed_time = time.time() - start_time
-        if time_limit != float('inf'):
-            print(
-                f'elapsed time is {elapsed_time}, time limit is {time_limit}')
         if elapsed_time >= time_limit:
             cancellation_event.set()
             print(f"Stopping enumeration due to time limit.")
@@ -144,7 +141,6 @@ def process_subdomain(subdomain: str, parent_response, filename, cancellation_ev
     # print(f'START LAME DELEGATION CHECK {subdomain}')
     lame_delegation, nameservers, all_nameservers, issues = lame_delegation_check.process_data(
         subdomain, domain_ns_cache, aggregate_cache)
-    # print(f'COMPLETED LAME DELEGATION? {subdomain}')
     all_orgs = format_providers(all_nameservers, ns_cache)
     print(f'writing to cache {subdomain}')
     aggregate_cache.set(subdomain, {
