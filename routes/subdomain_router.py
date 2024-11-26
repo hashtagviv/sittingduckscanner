@@ -1,3 +1,4 @@
+from typing import Optional, List
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from api.process_domains import main, stream_subdomain_data, processing_task
@@ -7,19 +8,26 @@ from concurrent.futures import ThreadPoolExecutor
 
 router = APIRouter()
 
-# Configure the ThreadPoolExecutor with a max number of threads
 
+# Configure the ThreadPoolExecutor with a max number of threads
 executor = ThreadPoolExecutor(max_workers=MAX_THREADS)
+
 
 class DomainRequest(BaseModel):
     domain: str
+    active: bool
+    related_domains: Optional[List[str]] = None
+    time_limit: Optional[int] = None
+
 
 def run_wrapper(func, *args):
     return asyncio.run(func(*args))
 
+
 async def run(func, *args):
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(executor, run_wrapper, func, *args)
+
 
 @router.post("/start")
 async def start_subdomain_processing(request: DomainRequest, background_tasks: BackgroundTasks):
@@ -31,13 +39,16 @@ async def start_subdomain_processing(request: DomainRequest, background_tasks: B
     # Check if tasks can be added
     if processing_task.remaining_tasks():
         processing_task.add_tasks()
-        background_tasks.add_task(run, main, request.domain)
-
+        request_data = (request.domain, request.time_limit,
+                        request.related_domains, request.active)
+        background_tasks.add_task(run, main, *request_data)
         return {"status": "started", "message": f"Subdomain processing started for {request.domain}"}
     else:
-        raise HTTPException(status_code=409, detail="Subdomain processing is already running.")
+        raise HTTPException(
+            status_code=409, detail="Subdomain processing is already running.")
 
-@router.get("/stream")
+
+@ router.get("/stream")
 async def stream_data():
     """
     Stream the subdomain data in real-time.
