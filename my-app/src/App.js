@@ -30,9 +30,6 @@ export default function App() {
         throw new Error(`Failed to stop scanning: ${stopResponse.status}`);
       }
 
-      if (readerRef.current) {
-        readerRef.current.cancel();
-      }
       setLoading(false);
       setScanningCompleted(false);
       setErrorMessage(null);
