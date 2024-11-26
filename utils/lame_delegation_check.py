@@ -15,14 +15,10 @@ def get_ns_records(domain, domain_ns_cache, counter=10):
     """
     try:
         domain_ns_cached = domain_ns_cache.get_ns_record(domain)
-        print(f'found cache for domain {domain}, {domain_ns_cache}')
         if domain_ns_cached == dns.resolver.NoAnswer or domain_ns_cached == dns.resolver.NXDOMAIN:
             parent_domain = domain[domain.find('.') + 1:]
-            print(
-                f'getting parent domain, because already cached {parent_domain}')
             return get_ns_records(parent_domain, domain_ns_cache)
         if domain_ns_cached:
-            print(f'returning domain cached {domain}')
             return domain_ns_cached, domain
         time.sleep(2)
         answers = dns.resolver.resolve(domain, 'NS')
