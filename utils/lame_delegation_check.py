@@ -13,19 +13,20 @@ def get_ns_records(domain, domain_ns_cache, counter=10):
     """
     Retrieves the NS records for the given domain.
     """
-    # print('Getting NS Records lame delegation check...')
     try:
         domain_ns_cached = domain_ns_cache.get_ns_record(domain)
-        # print(f'Cached NS Received {domain_ns_cached}')
+        print(f'found cache for domain {domain}, {domain_ns_cache}')
         if domain_ns_cached == dns.resolver.NoAnswer or domain_ns_cached == dns.resolver.NXDOMAIN:
             parent_domain = domain[domain.find('.') + 1:]
+            print(
+                f'getting parent domain, because already cached {parent_domain}')
             return get_ns_records(parent_domain, domain_ns_cache)
         if domain_ns_cached:
+            print(f'returning domain cached {domain}')
             return domain_ns_cached, domain
         time.sleep(2)
         answers = dns.resolver.resolve(domain, 'NS')
         ns_records = [str(rdata.target).rstrip('.') for rdata in answers]
-        # print(f"Nameservers for {domain}: {', '.join(ns_records)}")
         domain_ns_cache.set_ns_record(domain, ns_records)
         if not ns_records:
             parent_domain = domain[domain.find('.') + 1:]
@@ -33,16 +34,13 @@ def get_ns_records(domain, domain_ns_cache, counter=10):
             return get_ns_records(parent_domain, domain_ns_cache)
         return ns_records, domain
     except dns.resolver.NoAnswer:
-        print(f"No answer received from NS query {domain}")
         parent_domain = domain[domain.find('.') + 1:]
         domain_ns_cache.set_ns_record(domain, dns.resolver.NoAnswer)
-        # print(f"Attempting to get parent level NS {parent_domain}")
         return get_ns_records(parent_domain, domain_ns_cache)
     except dns.resolver.NXDOMAIN:
         print(f"Domain does not exist: {domain}")
         domain_ns_cache.set_ns_record(domain, dns.resolver.NXDOMAIN)
         parent_domain = domain[domain.find('.') + 1:]
-        # print(f"Attempting to get parent level NS {parent_domain}")
         return get_ns_records(parent_domain, domain_ns_cache)
     except Exception as e:
         print(f"Error retrieving NS records for {domain}: {e}")
@@ -61,7 +59,6 @@ def resolve_ns_ips(ns_name):
         time.sleep(3)
         answers = dns.resolver.resolve(ns_name, 'A')
         ips = [str(rdata) for rdata in answers]
-        # print(f"Resolved IPs for {ns_name}: {', '.join(ips)}")
         return ips
     except dns.resolver.NoAnswer:
         print(f"No A records found for nameserver: {ns_name}")
@@ -77,7 +74,6 @@ def query_soa(ns_ip, domain, counter=5):
     Sends a SOA query to the specified nameserver IP for the given domain.
     Returns the DNS response message or None if an error occurs.
     """
-    # print(f'querying SOA for {ns_ip, domain}')
     try:
         time.sleep(2)
         query = dns.message.make_query(domain, dns.rdatatype.SOA)
@@ -96,7 +92,6 @@ def evaluate_response(response):
     Returns a list of issues found.
     """
     issues = []
-    # print(f'evaluating response ....\n \n')
 
     if response is None:
         issues.append("No response received.")
@@ -131,12 +126,14 @@ def main(domain, domain_ns_cache, aggregate_cache):
     """
 
     ns_records, domain = get_ns_records(domain, domain_ns_cache)
+    print(f'received {ns_records} for {domain} from main')
     if not ns_records:
         return None
 
     cache_data = aggregate_cache.get(domain)
     if cache_data:
-        return {'cached': True, 'lame_delegation': cache_data['lame_delegation'], 'nameservers': cache_data['flagged_name_servers']}
+        print(f'cache data being returned from main for {domain}')
+        return {'cached': True, 'lame_delegation': cache_data['lame_delegation'], 'nameservers': cache_data['flagged_name_servers'], 'all_nameservers': cache_data['all_nameservers']}, cache_data['issues']
 
     # Step 2: For each NS, resolve its IPs
     issues = []
@@ -169,7 +166,6 @@ def main(domain, domain_ns_cache, aggregate_cache):
             print(f'{ns} found to be lame with {issues}')
         else:
             ns_lame[ns] = False
-    # print(f'Evaluated all Nameservers for {domain}')
     return ns_lame, issues_found
 
 
@@ -178,9 +174,12 @@ def process_data(subdomain, domain_ns_cache, aggregate_cache):
     lame_servers, issues = main(subdomain, domain_ns_cache,
                                 aggregate_cache)
     if not lame_servers:
-        return None, [], False
+        return None, [], False, {}
     if 'cached' in lame_servers:
-        return lame_servers['lame_delegation'], lame_servers['nameservers']
+        issues = {}
+        if 'issues' in lame_servers:
+            issues = lame_servers['issues']
+        return lame_servers['lame_delegation'], lame_servers['nameservers'], lame_servers['all_nameservers'], issues
     final_result = False
     all_nameservers = []
     nameservers_flagged = []
