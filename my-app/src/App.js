@@ -1,4 +1,3 @@
-// App.js
 import React, { useState, useRef } from "react";
 import "./App.css";
 import IndentedList from "./IndentedList";
@@ -6,22 +5,48 @@ import DomainDetails from "./DomainDetails";
 import logo from "./logo.webp";
 
 export default function App() {
+  // Existing state variables...
   const [domainData, setDomainData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [totalDomainsScanned, setTotalDomainsScanned] = useState(0);
   const [totalVulnerableDomains, setTotalVulnerableDomains] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [scanningCompleted, setScanningCompleted] = useState(false); // New state variable
+  const [scanningCompleted, setScanningCompleted] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [showOnlyVulnerable, setShowOnlyVulnerable] = useState(false);
+  const [email, setEmail] = useState("");
+  const [scanType, setScanType] = useState("active");
+  const [searchRelatedDomains, setSearchRelatedDomains] = useState(false);
+  const [selectedTLDs, setSelectedTLDs] = useState([]);
+  const [customTLDs, setCustomTLDs] = useState("");
+  const [configureWeeklyEmails, setConfigureWeeklyEmails] = useState(false);
 
   const intervalRef = useRef(null);
   const readerRef = useRef(null);
 
+  const handleTLDChange = (e, tld) => {
+    if (e.target.checked) {
+      setSelectedTLDs([...selectedTLDs, tld]);
+    } else {
+      setSelectedTLDs(selectedTLDs.filter((item) => item !== tld));
+    }
+  };
+
+  const replaceTLD = (domain, newTLD) => {
+    const parts = domain.split(".");
+    if (parts.length > 1) {
+      parts.pop(); // remove current TLD
+      const formattedTLD = newTLD.startsWith(".") ? newTLD.slice(1) : newTLD;
+      parts.push(formattedTLD);
+      return parts.join(".");
+    }
+    return domain;
+  };
+
   const handleStop = async () => {
     try {
-      // Signal the backend to stop
       const stopResponse = await fetch("http://localhost:8000/stop", {
         method: "POST",
       });
@@ -33,6 +58,11 @@ export default function App() {
       setLoading(false);
       setScanningCompleted(false);
       setErrorMessage(null);
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     } catch (error) {
       console.error("Error stopping scanning:", error);
       setErrorMessage(error.message || "An unexpected error occurred.");
@@ -48,23 +78,34 @@ export default function App() {
       setDomainData([]);
       setElapsedTime(0);
       setErrorMessage(null);
-      // Start timer
 
       intervalRef.current = setInterval(() => {
         setElapsedTime((prevTime) => prevTime + 1);
       }, 1000);
 
+      const customTLDArray = customTLDs
+        ? customTLDs
+            .split(",")
+            .map((tld) => tld.trim())
+            .filter((tld) => tld !== "")
+        : [];
+      const allTLDs = [...selectedTLDs, ...customTLDArray];
+      const relatedDomains = searchRelatedDomains
+        ? allTLDs.map((tld) => replaceTLD(searchTerm, tld))
+        : [];
+
+      const requestBody = {
+        domain: searchTerm,
+        email: email,
+        related_domains: relatedDomains,
+        time_limit: 100000,
+        active: scanType === "active" ? 1 : 0,
+      };
+
       const startResponse = await fetch("http://localhost:8000/start", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          domain: searchTerm,
-          related_domains: [],
-          time_limit: 100000,
-          active: 1,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
       });
 
       if (!startResponse.ok) {
@@ -91,18 +132,13 @@ export default function App() {
       let readFlag = true;
       while (readFlag) {
         const { value } = await reader.read();
-
         const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split("\n").filter(Boolean);
         const filteredLines = lines.filter((line) => line.startsWith("data:"));
-
-        const jsonLines = filteredLines.map((line) => {
-          return line.replace("data: ", "");
-        });
-
-        const parsedData = jsonLines.map((jsonLine) => {
-          return JSON.parse(jsonLine);
-        });
+        const jsonLines = filteredLines.map((line) =>
+          line.replace("data: ", "")
+        );
+        const parsedData = jsonLines.map((jsonLine) => JSON.parse(jsonLine));
 
         let newNodes = [];
         for (const item of parsedData) {
@@ -133,7 +169,6 @@ export default function App() {
         allNodes.push(...newNodes);
         setDomainData([...allNodes]);
 
-        // Update counts
         setTotalDomainsScanned((prevCount) => prevCount + newNodes.length);
         const vulnerableCount = newNodes.filter(
           (node) => node.vulnerable
@@ -164,7 +199,6 @@ export default function App() {
     }
   };
 
-  // Function to format elapsed time in mm:ss
   const formatTime = (totalSeconds) => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -178,6 +212,162 @@ export default function App() {
         <h1>Sitting Duck Detector</h1>
       </div>
       <div className="header-separator"></div>
+
+      {/* Configuration Box */}
+      <div className="configuration-box">
+        <h2>Configure Your Search</h2>
+        <div className="config-items-container">
+          <div className="config-item">
+            <label>
+              Email Results:
+              <div className="tooltip-container">
+                <span className="tooltip-icon">?</span>
+                <span className="tooltip-text">
+                  It may take some time to receive results via email. Please be
+                  patient.
+                </span>
+              </div>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="config-item">
+            <label>
+              Scanning Type:
+              <div className="tooltip-container">
+                <span className="tooltip-icon">?</span>
+                <span className="tooltip-text">
+                  Choose Active for more in-depth scanning, Passive for lighter
+                  checks.
+                </span>
+              </div>
+            </label>
+            <div className="radio-group">
+              <label>
+                <input
+                  type="radio"
+                  value="active"
+                  checked={scanType === "active"}
+                  onChange={(e) => setScanType(e.target.value)}
+                  disabled={loading}
+                />
+                Active
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="passive"
+                  checked={scanType === "passive"}
+                  onChange={(e) => setScanType(e.target.value)}
+                  disabled={loading}
+                />
+                Passive
+              </label>
+            </div>
+          </div>
+
+          <div className="config-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={searchRelatedDomains}
+                onChange={(e) => setSearchRelatedDomains(e.target.checked)}
+                disabled={loading}
+              />
+              Search for related domains
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={configureWeeklyEmails}
+                onChange={(e) => setConfigureWeeklyEmails(e.target.checked)}
+                disabled={loading}
+              />
+              Configure weekly emails
+              <div className="tooltip-container">
+                <span className="tooltip-icon">?</span>
+                <span className="tooltip-text">
+                  Enable this if you want to receive weekly email summaries.
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {searchRelatedDomains && (
+          <div className="related-domains-options">
+            <div className="checkbox-group">
+              {[".ca", ".org", ".co.uk", ".net", ".info", ".eu", ".ru"].map(
+                (tld) => (
+                  <label key={tld}>
+                    <input
+                      type="checkbox"
+                      value={tld}
+                      checked={selectedTLDs.includes(tld)}
+                      onChange={(e) => handleTLDChange(e, tld)}
+                      disabled={loading}
+                    />
+                    {tld}
+                  </label>
+                )
+              )}
+            </div>
+            <div className="custom-tlds">
+              <label>Custom TLDs:</label>
+              <input
+                type="text"
+                value={customTLDs}
+                onChange={(e) => setCustomTLDs(e.target.value)}
+                placeholder=".net, .info"
+                disabled={loading}
+              />
+            </div>
+          </div>
+        )}
+
+        {configureWeeklyEmails && (
+          <div className="weekly-emails-options">
+            <div className="weekly-emails-row">
+              <label>Frequency:</label>
+              <input
+                type="number"
+                min="1"
+                style={{ width: "50px" }}
+                disabled={loading}
+              />
+              <span>every</span>
+              <select disabled={loading}>
+                <option>Weeks</option>
+                <option>Days</option>
+                <option>Months</option>
+              </select>
+            </div>
+            <div className="weekly-email-item">
+              <label></label>
+              <input
+                type="email"
+                placeholder="Enter email"
+                disabled={loading}
+                style={{ width: "150px" }}
+              />
+              <div className="tooltip-container">
+                <span className="tooltip-icon">?</span>
+
+                <span className="tooltip-text">
+                  This email will receive your weekly summaries.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="search-bar">
         <input
           type="text"
@@ -203,11 +393,29 @@ export default function App() {
       <div className="content-container">
         <div className="left-pane">
           <h2>Domain List</h2>
+          <div className="filter-container tooltip-container">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                className="toggle-input"
+                checked={showOnlyVulnerable}
+                onChange={(e) => setShowOnlyVulnerable(e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+              <span className="tooltip-icon">?</span>
+              <span className="tooltip-text">
+                Enabling this will filter the domain list to show only
+                vulnerable domains.
+              </span>
+            </label>
+          </div>
+
           {domainData && (
             <IndentedList
               data={domainData}
               onDomainClick={setSelectedDomain}
               selectedDomain={selectedDomain}
+              showOnlyVulnerable={showOnlyVulnerable}
             />
           )}
         </div>

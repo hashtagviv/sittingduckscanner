@@ -2,10 +2,48 @@
 import React from "react";
 import "./IndentedList.css";
 
-const IndentedList = ({ data, onDomainClick, selectedDomain }) => {
+const IndentedList = ({
+  data,
+  onDomainClick,
+  selectedDomain,
+  showOnlyVulnerable,
+}) => {
+  const getAncestors = (domainName) => {
+    const parts = domainName.split(".");
+    const ancestors = [];
+    for (let i = 1; i < parts.length; i++) {
+      const ancestor = parts.slice(i).join(".");
+      ancestors.push(ancestor);
+    }
+    return ancestors;
+  };
+
+  // Apply filtering
+  let filteredData = data;
+  if (showOnlyVulnerable) {
+    const vulnerableDomains = data.filter((domain) => domain.vulnerable);
+    const vulnerableDomainNames = new Set(
+      vulnerableDomains.map((domain) => domain.name)
+    );
+
+    const ancestorDomainNames = new Set();
+    vulnerableDomains.forEach((domain) => {
+      const ancestors = getAncestors(domain.name);
+      ancestors.forEach((ancestor) => {
+        ancestorDomainNames.add(ancestor);
+      });
+    });
+
+    filteredData = data.filter(
+      (domain) =>
+        vulnerableDomainNames.has(domain.name) ||
+        ancestorDomainNames.has(domain.name)
+    );
+  }
+
   return (
     <div className="indented-list">
-      {data.map((node, index) => (
+      {filteredData.map((node, index) => (
         <div
           key={index}
           className={`node-item depth-${node.depth} ${

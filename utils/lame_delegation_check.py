@@ -122,13 +122,11 @@ def main(domain, domain_ns_cache, aggregate_cache):
     """
 
     ns_records, domain = get_ns_records(domain, domain_ns_cache)
-    print(f'received {ns_records} for {domain} from main')
     if not ns_records:
         return None
 
     cache_data = aggregate_cache.get(domain)
     if cache_data:
-        print(f'cache data being returned from main for {domain}')
         return {'cached': True, 'lame_delegation': cache_data['lame_delegation'], 'nameservers': cache_data['flagged_name_servers'], 'all_nameservers': cache_data['all_nameservers']}, cache_data['issues']
 
     # Step 2: For each NS, resolve its IPs
