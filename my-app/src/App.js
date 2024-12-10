@@ -142,6 +142,7 @@ export default function App() {
 
         let newNodes = [];
         for (const item of parsedData) {
+          console.log(item);
           if (item.status === "complete") {
             readFlag = false;
             break;
@@ -223,8 +224,8 @@ export default function App() {
               <div className="tooltip-container">
                 <span className="tooltip-icon">?</span>
                 <span className="tooltip-text">
-                  It may take some time to receive results via email. Please be
-                  patient.
+                  Depending on the size of your domain, it will take 5-120
+                  minutes for a full scan.
                 </span>
               </div>
             </label>
@@ -243,8 +244,10 @@ export default function App() {
               <div className="tooltip-container">
                 <span className="tooltip-icon">?</span>
                 <span className="tooltip-text">
-                  Choose Active for more in-depth scanning, Passive for lighter
-                  checks.
+                  Active uses a recursive DNS brute force scan to find
+                  subdomains. This may be considered malicious by the domain, we
+                  recommend using passive if you do not have permission to do
+                  so.
                 </span>
               </div>
             </label>
@@ -293,7 +296,8 @@ export default function App() {
               <div className="tooltip-container">
                 <span className="tooltip-icon">?</span>
                 <span className="tooltip-text">
-                  Enable this if you want to receive weekly email summaries.
+                  Enable this for weekly reports on your domain status: It will
+                  keep track of Vulnerabilities, Connectivity and New Domains!
                 </span>
               </div>
             </label>
@@ -335,13 +339,14 @@ export default function App() {
           <div className="weekly-emails-options">
             <div className="weekly-emails-row">
               <label>Frequency:</label>
+              <span>every</span>
               <input
                 type="number"
                 min="1"
                 style={{ width: "50px" }}
                 disabled={loading}
               />
-              <span>every</span>
+
               <select disabled={loading}>
                 <option>Weeks</option>
                 <option>Days</option>
@@ -356,13 +361,7 @@ export default function App() {
                 disabled={loading}
                 style={{ width: "150px" }}
               />
-              <div className="tooltip-container">
-                <span className="tooltip-icon">?</span>
-
-                <span className="tooltip-text">
-                  This email will receive your weekly summaries.
-                </span>
-              </div>
+              <div className="tooltip-container"></div>
             </div>
           </div>
         )}
@@ -450,6 +449,17 @@ export default function App() {
           </div>
         </>
       )}
+      <footer className="page-footer">
+        If any of your domains were found to be vulnerable, then visit this
+        resource for some recommended actions:
+        <a
+          href="https://www.cisa.gov/sites/default/files/publications/CISAInsights-Cyber-MitigateDNSInfrastructureTampering_S508C.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          https://www.cisa.gov/sites/default/files/publications/CISAInsights-Cyber-MitigateDNSInfrastructureTampering_S508C.pdf
+        </a>
+      </footer>
     </div>
   );
 }
