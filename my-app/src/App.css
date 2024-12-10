@@ -36,9 +36,8 @@ html {
   margin: 0;
   font-size: 70px;
   color:  #000000aa;
-
+  font-family: inherit;
   font-weight: 600;
-  font-family: 'Montserrat', sans-serif;
 }
 
 
@@ -288,7 +287,7 @@ html {
 }
 
 .configuration-box {
-  background: linear-gradient(90deg, #7bbaf0, #42a5f5);
+  background: linear-gradient(90deg, #6eb4f1, #4daaf5);
   padding: 5px;
   margin: 15px 0;
   border: 1px solid #ccc;
@@ -592,4 +591,22 @@ html {
   color: #333;
   width: 80px;
   margin-left: 5px;
+}
+
+.page-footer {
+  margin: 20px auto;
+  font-size: 12px;
+  width: 90%;
+  color: #333;
+  text-align: center;
+}
+
+.page-footer a {
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.page-footer a:hover {
+  text-decoration: underline;
 }
