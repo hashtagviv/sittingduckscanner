@@ -83,7 +83,7 @@ def get_lastest_file(domain_name):
             lastest_file_time = file_time
     now = datetime.now()
     if_fresh = now - lastest_file_time <= timedelta(hours=24)
-
+    lastest_file = f'history/{domain_name}/{lastest_file}'
     return lastest_file, if_fresh
 
 def load_file(filename, aggregate_cache):
@@ -105,14 +105,15 @@ async def main(domain="", time_limit=float('inf'), related_domains=[], active=Tr
     if not os.path.exists(filename):
         os.makedirs(filename, exist_ok=True)
     lastest_file, if_fresh = get_lastest_file(domain)
-    current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f'{filename}/{domain}_{current_date}'
-    filename = initialize_file(generate_filename(filename))
+    
     
     if if_fresh:
         print("The domain was processed recently. Use latest cache")
-        aggregate_cache = load_file(filename, aggregate_cache)
+        aggregate_cache = load_file(lastest_file, aggregate_cache)
     else:
+        current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f'{filename}/{domain}_{current_date}'
+        filename = initialize_file(generate_filename(filename))
         file_lock = threading.Lock()
         executor = ThreadPoolExecutor(max_workers=10)
         start_time = time.time()
