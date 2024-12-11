@@ -26,5 +26,3 @@ class AggregateDataCache:
                 subdomains.append(subdomain)
                 datas.append(self.aggregate_data.get(subdomain))
             return subdomains,datas
-
-

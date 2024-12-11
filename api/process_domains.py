@@ -30,6 +30,7 @@ data_event = asyncio.Event()
 cancellation_event = asyncio.Event()
 processing_task = ProcessorsAvailable()
 processing = 0
+use_cache = False
 
 
 def generate_filename(domain):
@@ -91,13 +92,13 @@ def load_file(filename, aggregate_cache):
             for line in f:
                 # Parse each line as JSON
                 record = json.loads(line.strip())
-
-                subdomain = record.pop('subdomain')       
+                
+                subdomain = record.pop('subdomain')     
                 aggregate_cache.set(subdomain, record)
-
+    return aggregate_cache
 
 async def main(domain="", time_limit=float('inf'), related_domains=[], active=True):
-    global processing, domains_processed, domain_ns_cache, aggregate_cache, ns_cache, registrant_cache, cancellation_event
+    global processing, domains_processed, domain_ns_cache, aggregate_cache, ns_cache, registrant_cache, cancellation_event, use_cache
     # cancellation_event = threading.Event()
 
     processing = 1
@@ -106,11 +107,13 @@ async def main(domain="", time_limit=float('inf'), related_domains=[], active=Tr
         os.makedirs(filename, exist_ok=True)
     lastest_file, if_fresh = get_lastest_file(domain)
     
-    
     if if_fresh:
         print("The domain was processed recently. Use latest cache")
-        aggregate_cache = load_file(lastest_file, aggregate_cache)
+        use_cache = True
+        data_event.set()
     else:
+        use_cache = False
+        data_event.set()
         current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f'{filename}/{domain}_{current_date}'
         filename = initialize_file(generate_filename(filename))
@@ -204,10 +207,17 @@ def process_subdomain(subdomain: str, parent_response, filename, cancellation_ev
                   **aggregate_cache.get(subdomain)}, file_lock)
 
 
-async def stream_subdomain_data():
+async def stream_subdomain_data(domain):
     global aggregate_cache
     global processing
-
+    global use_cache
+    filename = f'history/{domain}'
+    if_fresh = False
+    await data_event.wait()
+    if os.path.exists(filename) and use_cache:
+        # os.makedirs(filename, exist_ok=True)
+        lastest_file, if_fresh = get_lastest_file(domain)
+    
     async def event_generator():
         while processing:
             # Wait until there's new data available
@@ -218,7 +228,19 @@ async def stream_subdomain_data():
                 yield f"data: {json.dumps(response)}\n\n"
 
             data_event.clear()
-
         yield 'data: {"status": "complete"}\n\n'
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    async def event_generator1():    
+        subdomains, datas = aggregate_cache1.pop_last_domains()
+        for i in range(len(subdomains)):
+            response = {'subdomain': subdomains[i], **datas[i]}
+            yield f"data: {json.dumps(response)}\n\n"
+        yield 'data: {"status": "complete"}\n\n'
+
+    if if_fresh:
+        aggregate_cache1 = AggregateDataCache()
+        aggregate_cache1 = load_file(lastest_file, aggregate_cache1)
+        use_cache = False
+        return StreamingResponse(event_generator1(), media_type="text/event-stream")
+    else:
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
