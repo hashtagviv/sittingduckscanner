@@ -142,7 +142,6 @@ export default function App() {
 
         let newNodes = [];
         for (const item of parsedData) {
-          console.log(item);
           if (item.status === "complete") {
             readFlag = false;
             break;
@@ -224,8 +223,8 @@ export default function App() {
               <div className="tooltip-container">
                 <span className="tooltip-icon">?</span>
                 <span className="tooltip-text">
-                  Depending on the size of your domain, it will take 5-120
-                  minutes for a full scan.
+                  It may take some time to receive results via email. Please be
+                  patient.
                 </span>
               </div>
             </label>
@@ -244,10 +243,8 @@ export default function App() {
               <div className="tooltip-container">
                 <span className="tooltip-icon">?</span>
                 <span className="tooltip-text">
-                  Active uses a recursive DNS brute force scan to find
-                  subdomains. This may be considered malicious by the domain, we
-                  recommend using passive if you do not have permission to do
-                  so.
+                  Choose Active for more in-depth scanning, Passive for lighter
+                  checks.
                 </span>
               </div>
             </label>
@@ -296,8 +293,7 @@ export default function App() {
               <div className="tooltip-container">
                 <span className="tooltip-icon">?</span>
                 <span className="tooltip-text">
-                  Enable this for weekly reports on your domain status: It will
-                  keep track of Vulnerabilities, Connectivity and New Domains!
+                  Enable this if you want to receive weekly email summaries.
                 </span>
               </div>
             </label>
@@ -361,7 +357,13 @@ export default function App() {
                 disabled={loading}
                 style={{ width: "150px" }}
               />
-              <div className="tooltip-container"></div>
+              <div className="tooltip-container">
+                <span className="tooltip-icon">?</span>
+
+                <span className="tooltip-text">
+                  This email will receive your weekly summaries.
+                </span>
+              </div>
             </div>
           </div>
         )}
