@@ -13,19 +13,8 @@ recipient_email = "sittingduckdetector@gmail.com"
 subject = "Sitting Duck Weekly Report"
 body = "Please find the attached PDF generated from JSON data."
 
-def generate_pdf(json_data, pdf_file_name):
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    # Add JSON data to the PDF
-    for key, value in json_data.items():
-        pdf.cell(0, 10, txt=f"{key}: {value}", ln=True)
-
-    # Save PDF
-    pdf.output(pdf_file_name)
-    print(f"PDF generated: {pdf_file_name}")
+def generate_pdf(json, pdf_file_name):
+    pass
 
 def send_email(recipient_email):
     # Attach email body
