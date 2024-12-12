@@ -71,3 +71,4 @@ wordninja==2.0.0
 xmltodict==0.14.2
 xmltojson==2.0.3
 yara-python==4.5.1
+fpdf==1.7.2
