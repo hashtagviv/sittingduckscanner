@@ -114,7 +114,11 @@ export default function App() {
         );
       }
 
-      const streamResponse = await fetch("http://localhost:8000/stream", {
+      // const streamResponse = await fetch("http://localhost:8000/stream", {
+      //   method: "GET",
+      // });
+
+      const streamResponse = await fetch(`http://localhost:8000/stream?domain=${encodeURIComponent(searchTerm)}`, {
         method: "GET",
       });
 

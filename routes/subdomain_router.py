@@ -1,5 +1,5 @@
 from typing import Optional, List
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
 from api.process_domains import main, stream_subdomain_data, processing_task, cancellation_event
 from classes.processors import MAX_THREADS
@@ -7,7 +7,6 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 router = APIRouter()
-
 
 # Configure the ThreadPoolExecutor with a max number of threads
 executor = ThreadPoolExecutor(max_workers=MAX_THREADS)
@@ -65,11 +64,11 @@ async def start_subdomain_processing(request: DomainRequest, background_tasks: B
 
 
 @ router.get("/stream")
-async def stream_data():
+async def stream_data(domain: str = Query(...)):
     """
     Stream the subdomain data in real-time.
     """
     try:
-        return await stream_subdomain_data()
+        return await stream_subdomain_data(domain)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error streaming data")
