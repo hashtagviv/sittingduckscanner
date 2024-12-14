@@ -2,6 +2,8 @@ from fpdf import FPDF
 import json
 import textwrap
 
+gap_entry_summary = 50
+
 class BasePDF(FPDF):
     def header(self):
         self.set_font("Arial", style="B", size=16)
@@ -35,13 +37,6 @@ class PDFGenerator:
             self.pdf.cell(width, 10, header, border=1, align="C", fill=True)
         self.pdf.ln()
         self.pdf.set_font("Arial", size=12)
-
-    def draw_summary(self, summary_text, y_position):
-        self.set_font('Arial', '', 10)
-        for line in summary_text.split('\n'):
-            self.set_xy(10, y_position)
-            self.cell(0, 5, line)
-            y_position += 6
 
     def draw_cell(self, x, y, width, height, text, align="C"):
         self.pdf.rect(x, y, width, height)
@@ -92,10 +87,10 @@ class PDFGenerator:
                 line_counts.append(1)
         return max(line_counts) * 10
 
-    def get_num_lines(self, text, width):
-        if not text:
-            return 1
-        return max(1, len(self.pdf.multi_cell(width, 10, str(text), split_only=True)))
+    # def get_num_lines(self, text, width):
+    #     if not text:
+    #         return 1
+    #     return max(1, len(self.pdf.multi_cell(width, 10, str(text), split_only=True)))
 
     def check_page_break(self, height):
         if self.pdf.get_y() + height > self.pdf.page_break_trigger:
@@ -113,7 +108,7 @@ class PDFGenerator:
 
         self.pdf.set_xy(x_start, y_start + row_height)
 
-    def generate_summary(self, data):
+    def draw_summary(self, data):
         total_subdomains = len(data)
         domains_with_issues = len([d for d in data if d.get('issues')])
         
@@ -169,7 +164,7 @@ class PDFGenerator:
 
 
 
-    def generate(self, json_file, output_file):
+    def generate_report(self, json_file, output_file):
         with open(json_file, 'r') as f:
             json_data = [json.loads(line.strip()) for line in f]
 
@@ -183,12 +178,12 @@ class PDFGenerator:
             self.check_page_break(row_height)
             self.draw_row(processed_data.values(), row_height)
 
-        self.check_page_break(50)
-        self.generate_summary(json_data) 
+        self.check_page_break(gap_entry_summary)
+        self.draw_summary(json_data) 
 
         self.pdf.output(output_file)
 
-# Usage
+
 if __name__ == "__main__":
     pdf_generator = PDFGenerator()
-    pdf_generator.generate("mock.json", "weekly_report.pdf")
+    pdf_generator.generate_report("mock.json", "weekly_report.pdf")
