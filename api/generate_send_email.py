@@ -2,9 +2,6 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-import json
-import requests
-from fpdf import FPDF
 from api.json_processor import get_new_subdomain_json
 from api.report_pdf_generator import generate_report
 
@@ -15,32 +12,31 @@ body = "Please find the attached PDF generated from JSON data."
 
 
 def generate_pdf(domain):
-	new_subdomain_file = get_new_subdomain_json(domain)
-	generate_report(new_subdomain_file)
+    new_subdomain_file = get_new_subdomain_json(domain)
+    return generate_report(new_subdomain_file, domain)
+
 
 def send_email(recipient_email, domain):
     # Attach email body
-	report_pdf = generate_pdf(domain)
-    
-	msg = MIMEMultipart()
-	msg["From"] = sender_email
-	msg["To"] = recipient_email
-	msg["Subject"] = subject
-	pdf_file = 'pdf_report/report.pdf'
+    filename = generate_pdf(domain)
 
-	msg.attach(MIMEText('Sitting Duck Scanning Report PDF File', 'plain'))
-	
-	with open(pdf_file, 'rb') as p:
-		pdf_attachment = MIMEApplication(p.read(), _subtype='pdf')
-		pdf_attachment.add_header('Content-Disposition', f'attachment; filename=report.pdf')
-		msg.attach(pdf_attachment)
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+    msg["Subject"] = subject
+    pdf_file = f'pdf_report/{filename}'
 
-	server = smtplib.SMTP("smtp.gmail.com", 587)
-	server.starttls()
-	server.login(sender_email, "secret api key")
-	server.sendmail(sender_email, recipient_email, msg.as_string())
-    
-	print("successfully sent report")
-    
-# def main(recipent_email):
-#    send_email(recipent_email)
+    msg.attach(MIMEText('Sitting Duck Scanning Report PDF File', 'plain'))
+
+    with open(pdf_file, 'rb') as p:
+        pdf_attachment = MIMEApplication(p.read(), _subtype='pdf')
+        pdf_attachment.add_header(
+            'Content-Disposition', f'attachment; filename=report.pdf')
+        msg.attach(pdf_attachment)
+
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(sender_email, "secret api key")
+    server.sendmail(sender_email, recipient_email, msg.as_string())
+
+    print("successfully sent report")

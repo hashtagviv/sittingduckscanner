@@ -1,9 +1,11 @@
 from fpdf import FPDF
 import json
 import textwrap
+import datetime
 
 gap_entry_summary = 50
 chars_per_line_index = 1.2
+
 
 class BasePDF(FPDF):
     def header(self):
@@ -18,6 +20,7 @@ class BasePDF(FPDF):
         self.set_font("Arial", size=8)
         self.set_text_color(169, 169, 169)
         self.cell(0, 10, f"Page {self.page_no()}", align="C")
+
 
 class PDFGenerator:
     def __init__(self):
@@ -41,19 +44,21 @@ class PDFGenerator:
 
     def draw_cell(self, x, y, width, height, text, align="C"):
         self.pdf.rect(x, y, width, height)
-        
+
         if isinstance(text, str):
-            chars_per_line = int(width / (self.pdf.get_string_width('a') * chars_per_line_index))
-            
+            chars_per_line = int(
+                width / (self.pdf.get_string_width('a') * chars_per_line_index))
+
             if len(text) > chars_per_line:
                 wrapped_text = textwrap.fill(text, width=chars_per_line)
                 lines = wrapped_text.split('\n')
-                
-                line_height = 5 if width == self.column_widths[0] else height / len(lines)
+
+                line_height = 5 if width == self.column_widths[0] else height / len(
+                    lines)
                 total_text_height = line_height * len(lines)
-                
+
                 start_y = y + (height - total_text_height) / 2
-                
+
                 current_y = start_y
                 for line in lines:
                     self.pdf.set_xy(x, current_y)
@@ -81,7 +86,8 @@ class PDFGenerator:
         line_counts = []
         for text, width in zip(data, self.column_widths):
             if isinstance(text, str):
-                chars_per_line = int(width / (self.pdf.get_string_width('a') * 1.2))
+                chars_per_line = int(
+                    width / (self.pdf.get_string_width('a') * 1.2))
                 wrapped_text = textwrap.fill(text, width=chars_per_line)
                 line_counts.append(len(wrapped_text.split('\n')))
             else:
@@ -96,7 +102,7 @@ class PDFGenerator:
     def draw_row(self, data, row_height):
         x_start = self.pdf.get_x()
         y_start = self.pdf.get_y()
-        
+
         current_x = x_start
         for text, width in zip(data, self.column_widths):
             self.draw_cell(current_x, y_start, width, row_height, text)
@@ -107,13 +113,13 @@ class PDFGenerator:
     def draw_summary(self, data):
         total_subdomains = len(data)
         domains_with_issues = len([d for d in data if d.get('issues')])
-        
+
         current_y = self.pdf.get_y() + 10
         self.pdf.set_text_color(255, 0, 0)  # Red
-        
+
         self.pdf.set_xy(10, current_y)
         self.pdf.cell(50, 10, "Summary:")
-        
+
         current_y += 10
         self.pdf.set_xy(10, current_y)
         self.pdf.cell(100, 10, f"Total new subdomains: {total_subdomains}")
@@ -121,14 +127,14 @@ class PDFGenerator:
         current_y += 10
 
         self.pdf.set_xy(10, current_y)
-        self.pdf.cell(100, 10, f"Subdomains with issues: {domains_with_issues}")
-        
-       
+        self.pdf.cell(
+            100, 10, f"Subdomains with issues: {domains_with_issues}")
+
     def generate(self, json_file, output_file):
         json_data = []
         with open(json_file, 'r') as file:
             for line in file:
-                record = json.loads(line.strip())     
+                record = json.loads(line.strip())
                 json_data.append(record)
             # json_data = [json.loads(line.strip()) for line in file]
 
@@ -143,14 +149,14 @@ class PDFGenerator:
             self.draw_row(processed_data.values(), row_height)
 
         self.check_page_break(gap_entry_summary)
-        self.draw_summary(json_data) 
+        self.draw_summary(json_data)
 
         self.pdf.output(output_file)
 
-def generate_report(json_file):
-    pdf_generator = PDFGenerator()
-    pdf_generator.generate(json_file, "pdf_report/report.pdf")
 
-# if __name__ == "__main__":
-#     pdf_generator = PDFGenerator()
-#     pdf_generator.generate("mock.json", "report.pdf")
+def generate_report(json_file, domain):
+    pdf_generator = PDFGenerator()
+    current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f'{domain}_{current_date}.pdf'
+    pdf_generator.generate(json_file, f"pdf_report/{filename}")
+    return filename
