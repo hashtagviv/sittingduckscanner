@@ -139,7 +139,7 @@ def main(domain, domain_ns_cache, aggregate_cache):
 
         if not ns_ips:
             print(f"Flagging nameserver as lame due to unresolved IPs: {ns}")
-            issues_found[ns] = ["Nameserver IPs cannot be resolved" + ns]
+            issues_found[ns] = ["Nameserver IPs cannot be resolved"]
             ns_lame[ns] = True
             continue
 
