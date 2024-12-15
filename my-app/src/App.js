@@ -339,13 +339,14 @@ export default function App() {
           <div className="weekly-emails-options">
             <div className="weekly-emails-row">
               <label>Frequency:</label>
+              <span>every</span>
               <input
                 type="number"
                 min="1"
                 style={{ width: "50px" }}
                 disabled={loading}
               />
-              <span>every</span>
+
               <select disabled={loading}>
                 <option>Weeks</option>
                 <option>Days</option>
@@ -454,6 +455,17 @@ export default function App() {
           </div>
         </>
       )}
+      <footer className="page-footer">
+        If any of your domains were found to be vulnerable, then visit this
+        resource for some recommended actions:
+        <a
+          href="https://www.cisa.gov/sites/default/files/publications/CISAInsights-Cyber-MitigateDNSInfrastructureTampering_S508C.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          https://www.cisa.gov/sites/default/files/publications/CISAInsights-Cyber-MitigateDNSInfrastructureTampering_S508C.pdf
+        </a>
+      </footer>
     </div>
   );
 }

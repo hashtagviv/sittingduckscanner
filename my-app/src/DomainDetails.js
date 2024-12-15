@@ -73,6 +73,13 @@ const DomainDetails = ({ domain }) => {
                         <li key={index}>{issue}</li>
                       ))}
                     </ul>
+                    <a
+                      href="issues.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      How can I fix this?
+                    </a>
                   </div>
                 ))
               ) : (
