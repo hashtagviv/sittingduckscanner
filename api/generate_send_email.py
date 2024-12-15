@@ -6,6 +6,7 @@ from email import encoders
 import json
 import requests
 from fpdf import FPDF
+import 
 
 sender_email = "sittingduckdetector@gmail.com"
 sender_password = "1]28$VdiVJGlf@uZqp=!"
@@ -14,7 +15,7 @@ subject = "Sitting Duck Weekly Report"
 body = "Please find the attached PDF generated from JSON data."
 
 def generate_pdf(json, pdf_file_name):
-    pass
+    
 
 def send_email(recipient_email):
     # Attach email body
@@ -24,9 +25,9 @@ def send_email(recipient_email):
   		auth=("api", "YOUR_API_KEY"),
   		data={"from": "Excited User <mailgun@sandbox1c8d1e13f9a344d79b5a4e92db693b3f.mailgun.org>",
   			"to": ["bar@example.com", "YOU@sandbox1c8d1e13f9a344d79b5a4e92db693b3f.mailgun.org"],
-  			"subject": "Hello",
+  			"subject": "Sitting Duck Scan Result",
   			"text": "Testing some Mailgun awesomeness!"})
-    print("successfully sent weekly report")
+    print("successfully sent report")
     print(response)
 
 

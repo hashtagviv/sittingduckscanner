@@ -113,19 +113,6 @@ class PDFGenerator:
         total_subdomains = len(data)
         domains_with_issues = len([d for d in data if d.get('issues')])
         
-        dns_providers = {'awsdns': 0, 'akam': 0, 'ultradns': 0}
-        
-        for record in data:
-            nameservers = record.get('all_nameservers', [])
-            for ns in nameservers:
-                ns = ns.lower()
-                if 'awsdns' in ns:
-                    dns_providers['awsdns'] += 1
-                elif 'akam' in ns:
-                    dns_providers['akam'] += 1
-                elif 'ultradns' in ns:
-                    dns_providers['ultradns'] += 1
-
         current_y = self.pdf.get_y() + 10
         self.pdf.set_text_color(255, 0, 0)  # Red
         
