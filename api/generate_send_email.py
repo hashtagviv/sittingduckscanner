@@ -6,30 +6,34 @@ from email import encoders
 import json
 import requests
 from fpdf import FPDF
-import 
+from api.json_processor import get_new_subdomain_json
+from api.report_pdf_generator import generate_report
 
 sender_email = "sittingduckdetector@gmail.com"
-sender_password = "1]28$VdiVJGlf@uZqp=!"
+sender_password = ""
 recipient_email = "sittingduckdetector@gmail.com"
-subject = "Sitting Duck Weekly Report"
+subject = "Sitting Duck Report"
 body = "Please find the attached PDF generated from JSON data."
 
-def generate_pdf(json, pdf_file_name):
-    
 
-def send_email(recipient_email):
+
+def generate_pdf(domain):
+	new_subdomain_file = get_new_subdomain_json(domain)
+	generate_report(new_subdomain_file)
+
+def send_email(recipient_email, domain):
     # Attach email body
+	report_pdf = generate_pdf(domain)
+    
+	server = smtplib.SMTP("smtp.gmail.com", 587)
+	server.starttls()
+	server.login(sender_email, "secret api key")  # Login securely
+	server.sendmail(sender_email, recipient_email, text)
+    
+	print("successfully sent report")
+    
+	print(response)
 
-    response = requests.post(
-  		"https://api.mailgun.net/v3/sandbox1c8d1e13f9a344d79b5a4e92db693b3f.mailgun.org/messages",
-  		auth=("api", "YOUR_API_KEY"),
-  		data={"from": "Excited User <mailgun@sandbox1c8d1e13f9a344d79b5a4e92db693b3f.mailgun.org>",
-  			"to": ["bar@example.com", "YOU@sandbox1c8d1e13f9a344d79b5a4e92db693b3f.mailgun.org"],
-  			"subject": "Sitting Duck Scan Result",
-  			"text": "Testing some Mailgun awesomeness!"})
-    print("successfully sent report")
-    print(response)
 
-
-def main(recipent_email):
-   send_email(recipent_email)
+# def main(recipent_email):
+#    send_email(recipent_email)

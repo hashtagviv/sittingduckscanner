@@ -10,7 +10,7 @@ class BasePDF(FPDF):
         self.set_font("Arial", style="B", size=16)
         self.set_text_color(255, 255, 255)
         self.set_fill_color(0, 102, 204)
-        self.cell(0, 10, "Weekly Report", border=False, ln=True, align="C", fill=True)
+        self.cell(0, 10, "Report", border=False, ln=True, align="C", fill=True)
         self.ln(10)
 
     def footer(self):
@@ -88,11 +88,6 @@ class PDFGenerator:
                 line_counts.append(1)
         return max(line_counts) * 10
 
-    # def get_num_lines(self, text, width):
-    #     if not text:
-    #         return 1
-    #     return max(1, len(self.pdf.multi_cell(width, 10, str(text), split_only=True)))
-
     def check_page_break(self, height):
         if self.pdf.get_y() + height > self.pdf.page_break_trigger:
             self.pdf.add_page()
@@ -128,31 +123,14 @@ class PDFGenerator:
         self.pdf.set_xy(10, current_y)
         self.pdf.cell(100, 10, f"Subdomains with issues: {domains_with_issues}")
         
-        current_y += 10
-        self.pdf.set_xy(10, current_y)
-        self.pdf.cell(100, 10, f"DNS providers are Akamai, AWSDNS, UltraDNS")
-
-        current_y += 10
-        self.pdf.set_xy(10, current_y)
-        self.pdf.cell(100, 10, f"Numbers of provider nameserver used by new subdomains:")
-
-        current_y += 10
-        self.pdf.set_xy(10, current_y)
-        self.pdf.cell(100, 10, f"Akamai: {dns_providers['akam']}")
-
-        current_y += 10
-        self.pdf.set_xy(10, current_y)
-        self.pdf.cell(100, 10, f"AWSDNS: {dns_providers['awsdns']}")
-
-        current_y += 10
-        self.pdf.set_xy(10, current_y)
-        self.pdf.cell(100, 10, f"UltraDNS: {dns_providers['ultradns']}")
-
-
-
-    def generate_report(self, json_file, output_file):
-        with open(json_file, 'r') as f:
-            json_data = [json.loads(line.strip()) for line in f]
+       
+    def generate(self, json_file, output_file):
+        json_data = []
+        with open(json_file, 'r') as file:
+            for line in file:
+                record = json.loads(line.strip())     
+                json_data.append(record)
+            # json_data = [json.loads(line.strip()) for line in file]
 
         self.pdf.add_page()
         self.draw_title()
@@ -169,7 +147,10 @@ class PDFGenerator:
 
         self.pdf.output(output_file)
 
+def generate_report(json_file):
+    pdf_generator = PDFGenerator()
+    pdf_generator.generate(json_file, "pdf_report/weekly_report.pdf")
 
 if __name__ == "__main__":
     pdf_generator = PDFGenerator()
-    pdf_generator.generate_report("mock.json", "weekly_report.pdf")
+    pdf_generator.generate("mock.json", "weekly_report.pdf")

@@ -2,7 +2,7 @@ from typing import Optional, List
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
 from api.process_domains import main, stream_subdomain_data, processing_task, cancellation_event
-from api.generate_send_email import main as send_email
+from api.generate_send_email import send_email
 from classes.processors import MAX_THREADS
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -45,9 +45,10 @@ def run_wrapper(func, *args):
 async def run(func, *args):
     email = args[-1]
     args = args[:-1]
+    domain = args[0]
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(executor, run_wrapper, func, *args)
-    await loop.run_in_executor(executor, send_email, email)
+    await loop.run_in_executor(executor, send_email, email, domain)
     
 
 @router.post("/start")
