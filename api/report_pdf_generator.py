@@ -149,8 +149,8 @@ class PDFGenerator:
 
 def generate_report(json_file):
     pdf_generator = PDFGenerator()
-    pdf_generator.generate(json_file, "pdf_report/weekly_report.pdf")
+    pdf_generator.generate(json_file, "pdf_report/report.pdf")
 
-if __name__ == "__main__":
-    pdf_generator = PDFGenerator()
-    pdf_generator.generate("mock.json", "weekly_report.pdf")
+# if __name__ == "__main__":
+#     pdf_generator = PDFGenerator()
+#     pdf_generator.generate("mock.json", "report.pdf")

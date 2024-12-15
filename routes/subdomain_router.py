@@ -48,7 +48,8 @@ async def run(func, *args):
     domain = args[0]
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(executor, run_wrapper, func, *args)
-    await loop.run_in_executor(executor, send_email, email, domain)
+    if domain != "":
+        await loop.run_in_executor(executor, send_email, email, domain)
     
 
 @router.post("/start")
