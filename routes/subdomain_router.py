@@ -51,7 +51,7 @@ async def run(func, *args):
     await loop.run_in_executor(executor, run_wrapper, func, *args)
     if email != "":
         await loop.run_in_executor(executor, send_email, email, domain)
-    
+
 
 @router.post("/start")
 async def start_subdomain_processing(request: DomainRequest, background_tasks: BackgroundTasks):

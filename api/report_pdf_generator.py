@@ -28,10 +28,10 @@ class PDFGenerator:
         self.column_widths = [50, 20, 70, 50]
         self.headers = ["Subdomain", "Depth", "All Nameservers", "Issues"]
 
-    def draw_title(self):
+    def draw_title(self, title):
         self.pdf.set_font("Arial", style="B", size=14)
         self.pdf.set_text_color(0, 102, 204)
-        self.pdf.cell(0, 10, "New Subdomains", ln=True)
+        self.pdf.cell(0, 10, title, ln=True)
         self.pdf.ln(5)
 
     def draw_header(self):
@@ -53,8 +53,7 @@ class PDFGenerator:
                 wrapped_text = textwrap.fill(text, width=chars_per_line)
                 lines = wrapped_text.split('\n')
 
-                line_height = 5 if width == self.column_widths[0] else height / len(
-                    lines)
+                line_height = 5 if width == self.column_widths[0] else height / len(lines)
                 total_text_height = line_height * len(lines)
 
                 start_y = y + (height - total_text_height) / 2
@@ -80,7 +79,7 @@ class PDFGenerator:
         }
 
     def format_issues(self, issues):
-        return "\n".join(issues.values()) if issues else "No Issues"
+        return "\n".join(issues) if issues else "No Issues"
 
     def calculate_row_height(self, data):
         line_counts = []
@@ -110,7 +109,8 @@ class PDFGenerator:
 
         self.pdf.set_xy(x_start, y_start + row_height)
 
-    def draw_summary(self, data):
+    def draw_subdomains_summary(self, data, title):
+        self.pdf.set_font("Arial", style="B", size=12)
         total_subdomains = len(data)
         domains_with_issues = len([d for d in data if d.get('issues')])
 
@@ -122,7 +122,7 @@ class PDFGenerator:
 
         current_y += 10
         self.pdf.set_xy(10, current_y)
-        self.pdf.cell(100, 10, f"Total new subdomains: {total_subdomains}")
+        self.pdf.cell(100, 10, f"Total {title}: {total_subdomains}")
 
         current_y += 10
 
@@ -130,16 +130,17 @@ class PDFGenerator:
         self.pdf.cell(
             100, 10, f"Subdomains with issues: {domains_with_issues}")
 
-    def generate(self, json_file, output_file):
+    def generate(self, json_file, json_file1, output_file):
+        title1 = "New Subdomains"
+        title2 = "Vulnerable Subdomains"
         json_data = []
         with open(json_file, 'r') as file:
             for line in file:
                 record = json.loads(line.strip())
                 json_data.append(record)
-            # json_data = [json.loads(line.strip()) for line in file]
 
         self.pdf.add_page()
-        self.draw_title()
+        self.draw_title(title1)
         self.draw_header()
 
         for entry in json_data:
@@ -149,14 +150,33 @@ class PDFGenerator:
             self.draw_row(processed_data.values(), row_height)
 
         self.check_page_break(gap_entry_summary)
-        self.draw_summary(json_data)
+        self.draw_subdomains_summary(json_data, title1)
+        
+
+        json_data = []
+        with open(json_file1, 'r') as file:
+            for line in file:
+                record = json.loads(line.strip())
+                json_data.append(record)
+        self.pdf.add_page()
+        self.draw_title(title2)
+        self.draw_header()
+
+        for entry in json_data:
+            processed_data = self.process_entry(entry)
+            row_height = self.calculate_row_height(processed_data.values())
+            self.check_page_break(row_height)
+            self.draw_row(processed_data.values(), row_height)
+        
+        self.check_page_break(gap_entry_summary)
+        self.draw_subdomains_summary(json_data, title2)
 
         self.pdf.output(output_file)
 
 
-def generate_report(json_file, domain):
-    pdf_generator = PDFGenerator()
+def generate_report(new_subdomain_file, temp_whole_latest_file, domain):
     current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     filename = f'{domain}_{current_date}.pdf'
-    pdf_generator.generate(json_file, f"pdf_report/{filename}")
+    pdf_generator = PDFGenerator()
+    pdf_generator.generate(new_subdomain_file, temp_whole_latest_file, f"pdf_report/{filename}")
     return filename

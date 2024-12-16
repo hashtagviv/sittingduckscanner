@@ -2,7 +2,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from api.json_processor import get_new_subdomain_json
+from api.json_processor import get_new_subdomain_json_and_label_vulnerable_domains
 from api.report_pdf_generator import generate_report
 
 sender_email = "sittingduckdetector@gmail.com"
@@ -12,14 +12,15 @@ body = "Please find the attached PDF generated from JSON data."
 
 
 def generate_pdf(domain):
-    new_subdomain_file = get_new_subdomain_json(domain)
-    return generate_report(new_subdomain_file, domain)
+    new_subdomain_file, temp_whole_latest_file = get_new_subdomain_json_and_label_vulnerable_domains(domain)
+    return generate_report(new_subdomain_file, temp_whole_latest_file, domain)
 
 
 def send_email(recipient_email, domain):
     # Attach email body
     filename = generate_pdf(domain)
-
+    if recipient_email == "":
+        return
     msg = MIMEMultipart()
     msg["From"] = sender_email
     msg["To"] = recipient_email
