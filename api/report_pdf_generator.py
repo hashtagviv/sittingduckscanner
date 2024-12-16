@@ -1,7 +1,7 @@
 from fpdf import FPDF
 import json
 import textwrap
-import datetime
+from datetime import datetime
 
 gap_entry_summary = 50
 chars_per_line_index = 1.2
